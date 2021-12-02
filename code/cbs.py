@@ -132,9 +132,9 @@ def disjoint_splitting(collision):
                                 'positive':False
                                 })
     return constraints
-
-
     # pass
+
+
 
 def paths_violate_constraint(constraint, paths):
     assert constraint['positive'] is True
@@ -236,14 +236,50 @@ class CBSSolver(object):
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
         
+        def detect_cardinal(self, collision, p):
+            cardinality = 'non-cardinal'
+            new_constraints = standard_splitting(collision)
+            for c in p['constraints']:
+                    if c not in new_constraints:
+                        new_constraints.append(c)
+            a1 = collision['a1'] #agent a1
+            alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
+            if not alt_path1 or len(alt_path1) - 1 > len(p['paths']['a1']):
+                cardinality = 'semi-cardinal'
+
+            a2 = collision['a2'] #agent a2
+            alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)
+            if not alt_path2 or len(alt_path2) - 1 > len(p['paths']['a2']):
+                cardinality = 'cardinal'
+            return cardinality
+
+
         while len(self.open_list) > 0:
             p = self.pop_node()
             if p['collisions'] == []:
                 self.print_results(p)
                 return p['paths']
-            collision = p['collisions'].pop(0)
-            # constraints = standard_splitting(collision)
-            constraints = disjoint_splitting(collision)
+
+            chosen_collision = None
+            
+            # select a cardinal conflict;
+            # if none, select a semi-cardinal conflict
+            # if none, select a random conflict
+            for collision in p['collisions']:
+                if detect_cardinal(self, collision, p) == 'cardinal':
+                    chosen_collision = collision
+            if not chosen_collision:
+                for collision in p['collisions']:
+                    if detect_cardinal(self, collision, p) == 'semi-cardinal':
+                        chosen_collision = collision
+                if not chosen_collision:
+                    chosen_collision = p['collisions'].pop(0)
+            
+            # chosen_collision = p['collisions'].pop(0)
+
+            # constraints = standard_splitting(chosen_collision)
+            constraints = disjoint_splitting(chosen_collision)
+
             for constraint in constraints:
                 q = {'cost':0,
                     'constraints': [constraint],
@@ -268,17 +304,16 @@ class CBSSolver(object):
                         for v in vol:
                             path_v = a_star(self.my_map,self.starts[v], self.goals[v],self.heuristics[v],v,q['constraints'])
                             if path_v  is None:
-                                continue_flag =True
+                                continue_flag = True
                             else:
                                 q['paths'][v] = path_v
                         if continue_flag:
                             continue
+
                     q['collisions'] = detect_collisions(q['paths'])
                     q['cost'] = get_sum_of_cost(q['paths'])
                     self.push_node(q)     
         return None
-        self.print_results(root)
-        return root['paths']
 
 
     def print_results(self, node):
