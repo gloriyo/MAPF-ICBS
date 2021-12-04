@@ -1,0 +1,195 @@
+***Import an instance***
+Start locations
+. . @ . . . 6 . 
+. . 0 . . @ . . 
+4 . . . . 7 . . 
+. 3 . @ . . . . 
+. . . . . . @ . 
+. . . . . . . . 
+5 2 . . . @ . . 
+. . . . 1 . . @ 
+
+Goal locations
+. . @ . . . . . 
+. 5 . . . @ . . 
+. . . 3 . . . . 
+. . . @ . . . . 
+. . . . . . @ . 
+. 2 7 . . . . 4 
+. . 0 1 . @ . . 
+. . . . 6 . . @ 
+
+***Run CBS***
+Generate node 0
+[{'a1': 3, 'a2': 4, 'loc': [(2, 1)], 'timestep': 1}, {'a1': 3, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}, {'a1': 4, 'a2': 6, 'loc': [(2, 4)], 'timestep': 4}, {'a1': 4, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}]
+[{'agent': 4, 'loc': [(2, 1)], 'timestep': 1, 'positive': True}, {'agent': 4, 'loc': [(2, 1)], 'timestep': 1, 'positive': False}] 
+
+
+[{'agent': 7, 'loc': [(2, 3), (2, 2)], 'timestep': 3, 'positive': True}, {'agent': 7, 'loc': [(2, 3), (2, 2)], 'timestep': 3, 'positive': False}] 
+
+
+[{'agent': 6, 'loc': [(2, 4)], 'timestep': 4, 'positive': True}, {'agent': 6, 'loc': [(2, 4)], 'timestep': 4, 'positive': False}] 
+
+
+[{'agent': 7, 'loc': [(2, 3), (2, 2)], 'timestep': 3, 'positive': True}, {'agent': 7, 'loc': [(2, 3), (2, 2)], 'timestep': 3, 'positive': False}] 
+
+
+Expand node 0
+Node expanded. Collisions:  [{'a1': 3, 'a2': 4, 'loc': [(2, 1)], 'timestep': 1}, {'a1': 3, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}, {'a1': 4, 'a2': 6, 'loc': [(2, 4)], 'timestep': 4}, {'a1': 4, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}]
+Paths:  [[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (2, 1), (2, 2), (2, 3)], [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 7), (4, 7), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (0, 5), (0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (5, 2)]]
+Trying to find cardinal conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+No (semi-) cardinal collision. Randomly choosing a collision...
+Chosen collision:  {'a1': 3, 'a2': 4, 'loc': [(2, 1)], 'timestep': 1}
+Current agent:  3
+Bypass successful. Taking the child's solution and pushing into open list..
+Generate node 1
+Expand node 1
+Node expanded. Collisions:  [{'a1': 0, 'a2': 3, 'loc': [(2, 2), (3, 2)], 'timestep': 2}, {'a1': 3, 'a2': 4, 'loc': [(2, 2)], 'timestep': 2}, {'a1': 3, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}, {'a1': 4, 'a2': 6, 'loc': [(2, 4)], 'timestep': 4}, {'a1': 4, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}]
+Paths:  [[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (3, 2), (2, 2), (2, 3)], [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 7), (4, 7), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (0, 5), (0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (5, 2)]]
+Trying to find cardinal conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+No (semi-) cardinal collision. Randomly choosing a collision...
+Chosen collision:  {'a1': 0, 'a2': 3, 'loc': [(2, 2), (3, 2)], 'timestep': 2}
+Current agent:  0
+Current agent:  3
+Bypass failed. Continuing...
+Generate node 2
+Generate node 3
+Expand node 2
+Node expanded. Collisions:  [{'a1': 0, 'a2': 3, 'loc': [(3, 2)], 'timestep': 2}, {'a1': 3, 'a2': 7, 'loc': [(2, 2)], 'timestep': 3}, {'a1': 4, 'a2': 6, 'loc': [(2, 4)], 'timestep': 4}, {'a1': 4, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}]
+Paths:  [[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (3, 2), (3, 2), (2, 2), (2, 3)], [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 7), (4, 7), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (0, 5), (0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (5, 2)]]
+Trying to find cardinal conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+No (semi-) cardinal collision. Randomly choosing a collision...
+Chosen collision:  {'a1': 0, 'a2': 3, 'loc': [(3, 2)], 'timestep': 2}
+Current agent:  0
+Current agent:  3
+Bypass failed. Continuing...
+Generate node 4
+Generate node 5
+Expand node 4
+Node expanded. Collisions:  [{'a1': 3, 'a2': 7, 'loc': [(2, 2)], 'timestep': 3}, {'a1': 4, 'a2': 6, 'loc': [(2, 4)], 'timestep': 4}, {'a1': 4, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}]
+Paths:  [[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (3, 1), (2, 1), (2, 2), (2, 3)], [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 7), (4, 7), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (0, 5), (0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (5, 2)]]
+Trying to find cardinal conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+No (semi-) cardinal collision. Randomly choosing a collision...
+Chosen collision:  {'a1': 3, 'a2': 7, 'loc': [(2, 2)], 'timestep': 3}
+Current agent:  3
+Current agent:  7
+Bypass failed. Continuing...
+Generate node 6
+Generate node 7
+Expand node 6
+Node expanded. Collisions:  [{'a1': 4, 'a2': 6, 'loc': [(2, 4)], 'timestep': 4}]
+Paths:  [[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (3, 1), (2, 1), (2, 2), (2, 3)], [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 7), (4, 7), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (0, 5), (0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (3, 4), (4, 4), (4, 3), (4, 2), (5, 2)]]
+Trying to find cardinal conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+No (semi-) cardinal collision. Randomly choosing a collision...
+Chosen collision:  {'a1': 4, 'a2': 6, 'loc': [(2, 4)], 'timestep': 4}
+Current agent:  4
+Bypass successful. Taking the child's solution and pushing into open list..
+Generate node 8
+Expand node 8
+Node expanded. Collisions:  [{'a1': 4, 'a2': 6, 'loc': [(4, 4)], 'timestep': 6}, {'a1': 4, 'a2': 7, 'loc': [(4, 2), (4, 3)], 'timestep': 5}]
+Paths:  [[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (3, 1), (2, 1), (2, 2), (2, 3)], [(2, 0), (3, 0), (3, 1), (3, 2), (4, 2), (4, 3), (4, 4), (4, 5), (5, 5), (5, 6), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (0, 5), (0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (3, 4), (4, 4), (4, 3), (4, 2), (5, 2)]]
+Trying to find cardinal conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+No (semi-) cardinal collision. Randomly choosing a collision...
+Chosen collision:  {'a1': 4, 'a2': 6, 'loc': [(4, 4)], 'timestep': 6}
+Current agent:  4
+Bypass successful. Taking the child's solution and pushing into open list..
+Generate node 9
+Expand node 9
+Node expanded. Collisions:  [{'a1': 4, 'a2': 6, 'loc': [(5, 4)], 'timestep': 7}, {'a1': 4, 'a2': 7, 'loc': [(4, 2), (4, 3)], 'timestep': 5}]
+Paths:  [[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (3, 1), (2, 1), (2, 2), (2, 3)], [(2, 0), (3, 0), (3, 1), (3, 2), (4, 2), (4, 3), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (0, 5), (0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (3, 4), (4, 4), (4, 3), (4, 2), (5, 2)]]
+Trying to find cardinal conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+No (semi-) cardinal collision. Randomly choosing a collision...
+Chosen collision:  {'a1': 4, 'a2': 6, 'loc': [(5, 4)], 'timestep': 7}
+Current agent:  4
+Current agent:  6
+Bypass failed. Continuing...
+Generate node 10
+Generate node 11
+Expand node 3
+Node expanded. Collisions:  [{'a1': 0, 'a2': 3, 'loc': [(2, 2)], 'timestep': 2}, {'a1': 0, 'a2': 4, 'loc': [(2, 2)], 'timestep': 2}, {'a1': 3, 'a2': 4, 'loc': [(2, 2)], 'timestep': 2}, {'a1': 3, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}, {'a1': 4, 'a2': 6, 'loc': [(2, 4)], 'timestep': 4}, {'a1': 4, 'a2': 7, 'loc': [(2, 2), (2, 3)], 'timestep': 3}]
+Paths:  [[(1, 2), (2, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (3, 2), (2, 2), (2, 3)], [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 7), (4, 7), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (0, 5), (0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (2, 3), (2, 2), (3, 2), (4, 2), (5, 2)]]
+Trying to find cardinal conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+No (semi-) cardinal collision. Randomly choosing a collision...
+Chosen collision:  {'a1': 0, 'a2': 3, 'loc': [(2, 2)], 'timestep': 2}
+Current agent:  0
+Current agent:  3
+Bypass failed. Continuing...
+Generate node 12
+Generate node 13
+Expand node 10
+Node expanded. Collisions:  [{'a1': 4, 'a2': 7, 'loc': [(4, 2), (4, 3)], 'timestep': 5}]
+Paths:  [[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (3, 1), (2, 1), (2, 2), (2, 3)], [(2, 0), (3, 0), (3, 1), (3, 2), (4, 2), (4, 3), (5, 3), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (1, 6), (2, 6), (2, 5), (3, 5), (4, 5), (5, 5), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (3, 4), (4, 4), (4, 3), (4, 2), (5, 2)]]
+Trying to find cardinal conflict.
+Beginning to identify conflict.
+Beginning to identify conflict.
+No (semi-) cardinal collision. Randomly choosing a collision...
+Chosen collision:  {'a1': 4, 'a2': 7, 'loc': [(4, 2), (4, 3)], 'timestep': 5}
+Current agent:  4
+Current agent:  7
+Bypass failed. Continuing...
+Generate node 14
+Generate node 15
+Expand node 14
+
+ Found a solution! 
+
+CPU time (s):    0.03
+Sum of costs:    44
+Expanded nodes:  10
+Generated nodes: 16
+[[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2)], [(7, 4), (6, 4), (6, 3)], [(6, 1), (5, 1)], [(3, 1), (3, 1), (2, 1), (2, 2), (2, 3)], [(2, 0), (3, 0), (3, 1), (3, 2), (4, 2), (5, 2), (5, 3), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)], [(6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0), (1, 1)], [(0, 6), (1, 6), (2, 6), (2, 5), (3, 5), (4, 5), (5, 5), (5, 4), (6, 4), (7, 4)], [(2, 5), (2, 4), (3, 4), (4, 4), (4, 3), (4, 2), (5, 2)]]
+***Test paths on a simulation***

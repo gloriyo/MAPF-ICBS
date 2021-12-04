@@ -3,6 +3,7 @@ import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
 import math
+import copy
 
 
 def detect_collision(path1, path2):
@@ -243,7 +244,7 @@ class CBSSolver(object):
         # Task 3.2: Testing
         for collision in root['collisions']:
             # print(standard_splitting(collision))
-            print(disjoint_splitting(collision),'\n\n')
+            print(disjoint_splitting(collision))
 
 
         ##############################
@@ -259,23 +260,31 @@ class CBSSolver(object):
         # as 'non-cardinal' or 'semi-cardinal' or 'cardinal'
         def detect_cardinal(self, collision, p):
             cardinality = 'non-cardinal'
+            
             new_constraints = standard_splitting(collision)
             for c in p['constraints']:
-                    if c not in new_constraints:
-                        new_constraints.append(c)
+                if c not in new_constraints:
+                    new_constraints.append(c)
                         
             a1 = collision['a1'] #agent a1
             alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
-            if not alt_path1 or len(alt_path1) - 1 > len(p['paths'][a1]):
+            if not alt_path1 and len(alt_path1) > len(p['paths'][a1]):
                 cardinality = 'semi-cardinal'
+                
+                print('alt_path1 takes longer or is empty. at least semi-cardinal.')
                 
             a2 = collision['a2'] #agent a2
             alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)
-            if not alt_path2 or len(alt_path2) - 1 > len(p['paths'][a2]):
+            if not alt_path2 and len(alt_path2) > len(p['paths'][a2]):
                 if cardinality == 'semi-cardinal':
                     cardinality = 'cardinal'
+                    
+                    print('identified cardinal conflict')
+  
                 else:
                     cardinality == 'semi-cardinal'
+                    
+                    print('alt_path2 takes longer or is empty. semi-cardinal.')   
                 
             return cardinality   
 
@@ -320,8 +329,8 @@ class CBSSolver(object):
                     
                     print('Bypass successful. Taking the child\'s solution and pushing into open list..')
                     
-                    p['paths'][a_curr] = alt_path
-                    p['constraints'] = new_constraints
+                    p['paths'][a_curr] = copy.deepcopy(alt_path)
+                    p['constraints'] = copy.deepcopy(new_constraints)
                     p['collisions'] = detect_collisions(p['paths'])
                     p['cost'] = get_sum_of_cost(p['paths'])
                     
@@ -385,9 +394,9 @@ class CBSSolver(object):
                 self.print_results(p)
                 print(p['paths'])
                 return p['paths']
-            # print('Node expanded. Collisions: ', p['collisions'])
-            # print('Paths: ', p['paths'])
-            # print('Trying to find cardinal conflict.')
+            print('Node expanded. Collisions: ', p['collisions'])
+            print('Paths: ', p['paths'])
+            print('Trying to find cardinal conflict.')
 
 
             # select a cardinal conflict;
@@ -398,7 +407,7 @@ class CBSSolver(object):
             for collision in p['collisions']:
                 if detect_cardinal(self, collision, p) == 'cardinal':
                     
-                    # print('Detected cardinal collision. Chose it.')
+                    print('Detected cardinal collision. Chose it.')
                     
                     chosen_collision = collision
                     collision_type = 'cardinal'
@@ -406,7 +415,7 @@ class CBSSolver(object):
                 for collision in p['collisions']:
                     if detect_cardinal(self, collision, p) == 'semi-cardinal':
                         
-                        # print('Detected semi-cardinal collision. Chose it.')
+                        print('Detected semi-cardinal collision. Chose it.')
                         
                         chosen_collision = collision
                         collision_type = 'semi-cardinal'
@@ -416,8 +425,8 @@ class CBSSolver(object):
                     chosen_collision = p['collisions'].pop(0) 
                     collision_type = 'non-cardinal'
 
-                    # print('No (semi-) cardinal collision. Randomly choosing a collision...')
-                    # print('Chosen collision: ', chosen_collision)
+                    print('No cardinal or semi-cardinal conflict. Randomly choosing...')
+                    print('Chosen collision: ', chosen_collision)
 
             # implementing bypassing conflicts
             if collision_type != 'cardinal' and find_bypass(self,p, chosen_collision, collision_type):
