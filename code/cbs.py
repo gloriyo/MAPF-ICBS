@@ -290,7 +290,7 @@ class CBSSolver(object):
 
 
         # algorithm for bypass
-        # used for semi-cardinal and non-cardinal conflicts
+        # used for semi-cardinal and non-cardinal conflictsa_stare
         def find_bypass(self, p, collision, collision_type):
             # if collision_type == 'semi-cardinal':
                 # new_constraints = standard_splitting(collision)
@@ -344,17 +344,18 @@ class CBSSolver(object):
 
             # non-loop version
             # a1 = collision['a1'] #agent a1
+            # a2 = collision['a2'] #agent a2
             # alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
             # if alt_path1:
             #     new_paths.append(alt_path1)
-            #     new_paths.append(p['paths']['a2'])
+            #     new_paths.append(p['paths'][a2])
 
             # # if we find a helpful child
-            # if len(alt_path1) == len(p['paths']['a1']) \
+            # if len(alt_path1) == len(p['paths'][a1]) \
             #     and detect_all_collisions_pair(old_paths) < detect_all_collisions_pair(new_paths):
             #     # take the child's solution as its own
-            #     p['paths'][collision['a1']] = alt_path1
-            #     p['constraints'] = new_constraints
+            #     p['paths'][a1] = copy.deepcopy(alt_path1)
+            #     p['constraints'] = copy.deepcopy(new_constraints)
             #     p['collisions'] = detect_collisions(p['paths'])
             #     p['cost'] = get_sum_of_cost(p['paths'])
                 
@@ -362,18 +363,17 @@ class CBSSolver(object):
             #     self.push_node(p)
             #     return True
     
-            # a2 = collision['a2'] #agent a2
             # alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)    
             # if alt_path2:
-            #     new_paths.append(p['paths']['a1'])
+            #     new_paths.append(p['paths'][a1])
             #     new_paths.append(alt_path2)
             
             # # if we find a helpful child
-            # if len(alt_path2) == len(p['paths']['a2']) \
+            # if len(alt_path2) == len(p['paths'][a2]) \
             #     and detect_all_collisions_pair(old_paths) < detect_all_collisions_pair(new_paths):
             #     # take the child's solution as its own
-            #     p['paths'][collision['a2']] = alt_path2
-            #     p['constraints'] = new_constraints
+            #     p['paths'][a2] = copy.deepcopy(alt_path2)
+            #     p['constraints'] = copy.deepcopy(new_constraints)
             #     p['collisions'] = detect_collisions(p['paths'])
             #     p['cost'] = get_sum_of_cost(p['paths'])
                 
