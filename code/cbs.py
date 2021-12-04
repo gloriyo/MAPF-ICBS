@@ -2,6 +2,7 @@ import time as timer
 import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
+import math
 
 
 def detect_collision(path1, path2):
@@ -45,6 +46,22 @@ def detect_collisions(paths):
     return collisions
 
     # pass
+
+def detect_all_collisions_pair(paths):
+    path1 = paths[0]
+    path2 = paths[1]
+    collisions = []
+    t_range = max(len(path1),len(path2))
+    for t in range(t_range):
+        loc_c1 =get_location(path1,t)
+        loc_c2 = get_location(path2,t)
+        loc1 = get_location(path1,t+1)
+        loc2 = get_location(path2,t+1)
+        if loc1 == loc2:
+            collisions.append([[loc1],t])
+        if[loc_c1,loc1] ==[loc2,loc_c2]:
+            collisions.append([[loc2,loc_c2],t])
+    return collisions
 
 
 def standard_splitting(collision):
@@ -109,7 +126,7 @@ def disjoint_splitting(collision):
                             'positive':False
                             })
     else:
-        if agent ==0:
+        if agent == 0:
             constraints.append({'agent':collision[a],
                                 'loc':[collision['loc'][0],collision['loc'][1]],
                                 'timestep':collision['timestep'],
@@ -183,6 +200,7 @@ class CBSSolver(object):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
         print("Generate node {}".format(self.num_of_generated))
         self.num_of_generated += 1
+        
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
@@ -197,6 +215,7 @@ class CBSSolver(object):
         """
 
         self.start_time = timer.time()
+        
 
         # Generate the root node
         # constraints   - list of constraints
@@ -236,46 +255,173 @@ class CBSSolver(object):
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
         
+        # algorithm for detecting cardinality
+        # as 'non-cardinal' or 'semi-cardinal' or 'cardinal'
         def detect_cardinal(self, collision, p):
             cardinality = 'non-cardinal'
             new_constraints = standard_splitting(collision)
             for c in p['constraints']:
                     if c not in new_constraints:
                         new_constraints.append(c)
+                        
             a1 = collision['a1'] #agent a1
             alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
-            if not alt_path1 or len(alt_path1) - 1 > len(p['paths']['a1']):
+            if not alt_path1 or len(alt_path1) - 1 > len(p['paths'][a1]):
                 cardinality = 'semi-cardinal'
-
+                
             a2 = collision['a2'] #agent a2
             alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)
-            if not alt_path2 or len(alt_path2) - 1 > len(p['paths']['a2']):
-                cardinality = 'cardinal'
-            return cardinality
+            if not alt_path2 or len(alt_path2) - 1 > len(p['paths'][a2]):
+                if cardinality == 'semi-cardinal':
+                    cardinality = 'cardinal'
+                else:
+                    cardinality == 'semi-cardinal'
+                
+            return cardinality   
 
 
+        # algorithm for bypass
+        # used for semi-cardinal and non-cardinal conflicts
+        def find_bypass(self, p, collision, collision_type):
+            # if collision_type == 'semi-cardinal':
+                # new_constraints = standard_splitting(collision)
+            # else: # non-cardinal
+            #     new_constraints = disjoint_splitting(collision)
+            new_constraints = standard_splitting(collision)
+
+            for c in p['constraints']:
+                    if c not in new_constraints:
+                        new_constraints.append(c)
+                    
+            new_paths = []
+            old_paths = [p['paths'][collision['a1']], p['paths'][collision['a2']]]
+            
+            # loop version
+            agents = ['a1', 'a2']
+            for a in agents:
+                a_curr = collision[a] #current agent
+                
+                print('Current agent: ', a_curr)
+                  
+                alt_path = a_star(self.my_map,self.starts[a_curr], self.goals[a_curr],self.heuristics[a_curr],a_curr,new_constraints)
+                if alt_path:
+                    if a == 'a1':
+                        new_paths.append(alt_path)
+                        # new_paths.append(p['paths'][collision['a' + str(1 - agents.index(a))]])
+                        new_paths.append(p['paths'][collision['a2']]) # append a2 path
+                    else:
+                        new_paths.append(p['paths'][collision['a1']])
+                        new_paths.append(alt_path)
+                # if we find a helpful child
+                if len(alt_path) == len(p['paths'][a_curr]) \
+                    and detect_all_collisions_pair(old_paths) < detect_all_collisions_pair(new_paths):
+                    # take the child's solution as its own
+                    
+                    
+                    print('Bypass successful. Taking the child\'s solution and pushing into open list..')
+                    
+                    p['paths'][a_curr] = alt_path
+                    p['constraints'] = new_constraints
+                    p['collisions'] = detect_collisions(p['paths'])
+                    p['cost'] = get_sum_of_cost(p['paths'])
+                    
+                    # push into open list
+                    self.push_node(p)
+                    return True
+            
+            print('Bypass failed. Continuing...')
+                    
+            return False
+
+            # non-loop version
+            # a1 = collision['a1'] #agent a1
+            # alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
+            # if alt_path1:
+            #     new_paths.append(alt_path1)
+            #     new_paths.append(p['paths']['a2'])
+
+            # # if we find a helpful child
+            # if len(alt_path1) == len(p['paths']['a1']) \
+            #     and detect_all_collisions_pair(old_paths) < detect_all_collisions_pair(new_paths):
+            #     # take the child's solution as its own
+            #     p['paths'][collision['a1']] = alt_path1
+            #     p['constraints'] = new_constraints
+            #     p['collisions'] = detect_collisions(p['paths'])
+            #     p['cost'] = get_sum_of_cost(p['paths'])
+                
+            #     # push into open list
+            #     self.push_node(p)
+            #     return True
+    
+            # a2 = collision['a2'] #agent a2
+            # alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)    
+            # if alt_path2:
+            #     new_paths.append(p['paths']['a1'])
+            #     new_paths.append(alt_path2)
+            
+            # # if we find a helpful child
+            # if len(alt_path2) == len(p['paths']['a2']) \
+            #     and detect_all_collisions_pair(old_paths) < detect_all_collisions_pair(new_paths):
+            #     # take the child's solution as its own
+            #     p['paths'][collision['a2']] = alt_path2
+            #     p['constraints'] = new_constraints
+            #     p['collisions'] = detect_collisions(p['paths'])
+            #     p['cost'] = get_sum_of_cost(p['paths'])
+                
+            #     # push into open list
+            #     self.push_node(p)
+            #     return True
+            
+            # return False
+        
+        # normal CBS with disjoint and standard splitting
         while len(self.open_list) > 0:
+            # if self.num_of_generated > 60:
+            #     print('reached maximum number of nodes. Returning...')
+            #     return None
+   
             p = self.pop_node()
             if p['collisions'] == []:
                 self.print_results(p)
+                print(p['paths'])
                 return p['paths']
+            # print('Node expanded. Collisions: ', p['collisions'])
+            # print('Paths: ', p['paths'])
+            # print('Trying to find cardinal conflict.')
 
-            chosen_collision = None
-            
+
             # select a cardinal conflict;
             # if none, select a semi-cardinal conflict
             # if none, select a random conflict
+            chosen_collision = None
+            collision_type = None
             for collision in p['collisions']:
                 if detect_cardinal(self, collision, p) == 'cardinal':
+                    
+                    # print('Detected cardinal collision. Chose it.')
+                    
                     chosen_collision = collision
+                    collision_type = 'cardinal'
             if not chosen_collision:
                 for collision in p['collisions']:
                     if detect_cardinal(self, collision, p) == 'semi-cardinal':
+                        
+                        # print('Detected semi-cardinal collision. Chose it.')
+                        
                         chosen_collision = collision
+                        collision_type = 'semi-cardinal'
+    
                 if not chosen_collision:
-                    chosen_collision = p['collisions'].pop(0)
-            
-            # chosen_collision = p['collisions'].pop(0)
+                    
+                    chosen_collision = p['collisions'].pop(0) 
+                    collision_type = 'non-cardinal'
+
+                    # print('No (semi-) cardinal collision. Randomly choosing a collision...')
+                    # print('Chosen collision: ', chosen_collision)
+
+            # implementing bypassing conflicts
+            if collision_type != 'cardinal' and find_bypass(self,p, chosen_collision, collision_type):
+                continue
 
             # constraints = standard_splitting(chosen_collision)
             constraints = disjoint_splitting(chosen_collision)
