@@ -268,14 +268,14 @@ class CBSSolver(object):
                         
             a1 = collision['a1'] #agent a1
             alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
-            if not alt_path1 and len(alt_path1) > len(p['paths'][a1]):
+            if not alt_path1 or len(alt_path1) > len(p['paths'][a1]):
                 cardinality = 'semi-cardinal'
                 
                 print('alt_path1 takes longer or is empty. at least semi-cardinal.')
                 
             a2 = collision['a2'] #agent a2
             alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)
-            if not alt_path2 and len(alt_path2) > len(p['paths'][a2]):
+            if not alt_path2 or len(alt_path2) > len(p['paths'][a2]):
                 if cardinality == 'semi-cardinal':
                     cardinality = 'cardinal'
                     
