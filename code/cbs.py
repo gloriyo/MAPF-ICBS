@@ -260,7 +260,7 @@ class CBSSolver(object):
                     print('identified cardinal conflict')
   
                 else:
-                    cardinality == 'semi-cardinal'
+                    cardinality = 'semi-cardinal'
                     
                     print('alt_path2 takes longer or is empty. semi-cardinal.')   
                 
@@ -282,10 +282,12 @@ class CBSSolver(object):
             for collision in p['collisions']:
                 if detect_cardinal(self, collision, p) == 'cardinal':
                     chosen_collision = collision
+                    break
             if not chosen_collision:
                 for collision in p['collisions']:
                     if detect_cardinal(self, collision, p) == 'semi-cardinal':
                         chosen_collision = collision
+                        break
                 if not chosen_collision:
                     chosen_collision = p['collisions'].pop(0)
             
