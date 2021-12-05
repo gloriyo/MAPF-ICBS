@@ -266,7 +266,7 @@ class CBSSolver(object):
                     new_constraints.append(c)
                         
             a1 = collision['a1'] #agent a1
-            alt_path1 = copy.deepcopy(a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints))
+            alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
             print(alt_path1)
             if not alt_path1 or len(alt_path1) > len(p['paths'][a1]):
                 cardinality = 'semi-cardinal'
@@ -274,7 +274,7 @@ class CBSSolver(object):
                 print('alt_path1 takes longer or is empty. at least semi-cardinal.')
                 
             a2 = collision['a2'] #agent a2
-            alt_path2 = copy.deepcopy(a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints))
+            alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)
             print(alt_path2)
             if not alt_path2 or len(alt_path2) > len(p['paths'][a2]):
                 if cardinality == 'semi-cardinal':
@@ -294,8 +294,8 @@ class CBSSolver(object):
         # used for semi-cardinal and non-cardinal conflicts
         def find_bypass(self, p, collision, collision_type):
             assert collision_type != 'cardinal'
-            new_constraints = copy.deepcopy(standard_splitting(copy.deepcopy(collision)))
-
+            # new_constraints = standard_splitting(copy.deepcopy(collision))
+            new_constraints = disjoint_splitting(copy.deepcopy(collision))
             for c in p['constraints']:
                     if c not in new_constraints:
                         new_constraints.append(copy.deepcopy(c))
@@ -316,7 +316,7 @@ class CBSSolver(object):
                 q['paths'] = copy.deepcopy(p['paths'])
                 q['paths'][a_curr] = copy.deepcopy(alt_path)
                 q['constraints'] = copy.deepcopy(new_constraints)
-                q['collisions'] = copy.deepcopy(detect_collisions(copy.deepcopy(q['paths'])))
+                q['collisions'] = detect_collisions(copy.deepcopy(q['paths']))
                 q['cost'] = get_sum_of_cost(copy.deepcopy(q['paths']))
                 # if costs are the same and the new total number of conflicts are less
                 if q['cost'] == p['paths'] \
@@ -447,7 +447,7 @@ class CBSSolver(object):
                     q['paths'].append(pa)
                 
                 ai = constraint['agent']
-                path = copy.deepcopy(a_star(self.my_map,self.starts[ai], self.goals[ai],self.heuristics[ai],ai,q['constraints']))
+                path = a_star(self.my_map,self.starts[ai], self.goals[ai],self.heuristics[ai],ai,q['constraints'])
                 
                 if path is not None:
                     q['paths'][ai]= path
@@ -456,7 +456,7 @@ class CBSSolver(object):
                     if constraint['positive']:
                         vol = paths_violate_constraint(constraint,q['paths'])
                         for v in vol:
-                            path_v = copy.deepcopy(a_star(self.my_map,self.starts[v], self.goals[v],self.heuristics[v],v,q['constraints']))
+                            path_v = a_star(self.my_map,self.starts[v], self.goals[v],self.heuristics[v],v,q['constraints'])
                             if path_v  is None:
                                 continue_flag = True
                             else:
