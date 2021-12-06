@@ -46,29 +46,50 @@ def detect_collisions(paths):
                                 'timestep':t+1})
     return collisions
 
-def detect_all_collisions_pair(path1, path2):
-    collisions = []
+# def detect_all_collisions_pair(path1, path2):
+#     collisions = []
+#     t_range = max(len(path1),len(path2))
+#     for t in range(t_range):
+#         loc_c1 =get_location(path1,t)
+#         loc_c2 = get_location(path2,t)
+#         loc1 = get_location(path1,t+1)
+#         loc2 = get_location(path2,t+1)
+#         if loc1 == loc2:
+#             collisions.append([[loc1],t])
+#         if[loc_c1,loc1] ==[loc2,loc_c2]:
+#             collisions.append([[loc2,loc_c2],t])
+#     return collisions
+
+# def detect_all_collisions(paths, a_curr):
+#     collisions = []
+#     for i in range(len(paths)):
+#         if i != a_curr:
+#             temp = detect_all_collisions_pair(paths[i],paths[a_curr])
+#             for collision in temp:
+#                 if collision not in collisions:
+#                     collisions.append(copy.deepcopy(collision))
+#     return collisions
+def count_all_collisions_pair(path1, path2):
+    collisions = 0
     t_range = max(len(path1),len(path2))
     for t in range(t_range):
         loc_c1 =get_location(path1,t)
         loc_c2 = get_location(path2,t)
         loc1 = get_location(path1,t+1)
         loc2 = get_location(path2,t+1)
-        if loc1 == loc2:
-            collisions.append([[loc1],t])
-        if[loc_c1,loc1] ==[loc2,loc_c2]:
-            collisions.append([[loc2,loc_c2],t])
+        if loc1 == loc2 or [loc_c1,loc1] ==[loc2,loc_c2]:
+            collisions += 1
     return collisions
 
-def detect_all_collisions(paths, a_curr):
-    collisions = []
-    for i in range(len(paths)):
-        if i != a_curr:
-            temp = detect_all_collisions_pair(paths[i],paths[a_curr])
-            for collision in temp:
-                if collision not in collisions:
-                    collisions.append(copy.deepcopy(collision))
-    return collisions
+def count_all_collisions(paths):
+    collisions = 0
+    for i in range(len(paths)-1):
+        for j in range(i+1,len(paths)):
+            ij_collisions = count_all_collisions_pair(paths[i],paths[j])
+            collisions += ij_collisions
+
+    print("number of collisions: ", collisions)
+    return collisions    
 
 def standard_splitting(collision):
     ##############################
@@ -304,14 +325,6 @@ class CBSSolver(object):
         def find_bypass(self, p, collision, collision_type):
             assert collision_type != 'cardinal'
             new_constraints = standard_splitting(copy.deepcopy(collision))
-            temp = standard_splitting(copy.deepcopy(collision))
-            
-            # new_constraints = disjoint_splitting(copy.deepcopy(collision))
-            # temp = disjoint_splitting(copy.deepcopy(collision))
-
-            for c in p['constraints']:
-                    if c not in new_constraints:
-                        new_constraints.append(copy.deepcopy(c))
             
             # loop version
             agents = ['a1', 'a2']
@@ -319,15 +332,9 @@ class CBSSolver(object):
                 a_curr = collision[a] #current agent
                 
                 print('Current agent: ', a_curr)
-                
+                a_constraints = copy.deepcopy(p['constraints'])
+                a_constraints.append(new_constraints[agents.index(a)])
                 alt_path = a_star(self.my_map,self.starts[a_curr], self.goals[a_curr],self.heuristics[a_curr],a_curr,new_constraints)
-                split = []
-                for con in temp:
-                    if con['agent'] ==a_curr:
-                             split.append(con)
-                for constraint in p['constraints']:
-                    if constraint not in split:
-                        split.append(constraint)
                 q = {'cost':0,
                     'constraints': [],
                     'paths':[],
@@ -335,22 +342,13 @@ class CBSSolver(object):
                     }
                 q['paths'] = copy.deepcopy(p['paths'])
                 q['paths'][a_curr] = copy.deepcopy(alt_path)
-                # q['constraints'] = copy.deepcopy(new_constraints)
-                q['constraints'] = copy.deepcopy(split)
+                q['constraints'] = copy.deepcopy(a_constraints)
                 q['collisions'] = detect_collisions(copy.deepcopy(q['paths']))
                 q['cost'] = get_sum_of_cost(copy.deepcopy(q['paths']))
                 # if costs are the same and the new total number of conflicts are less
                 if q['cost'] == p['cost'] \
-                    and (len(detect_all_collisions(q['paths'],a_curr)) < len(detect_all_collisions(p['paths'],a_curr))):
-                # path1 = p['paths'][collision['a1']]
-                # path2 = p['paths'][collision['a2']]
-                # new_path1 = q['paths'][collision['a1']]
-                # new_path2 = q['paths'][collision['a2']]
-
-                # if q['cost'] == p['cost'] \
-                #     and (len(detect_all_collisions_pair(path1,path2)) < len(detect_all_collisions_pair(new_path1,new_path2))):
+                    and (count_all_collisions(q['paths']) < count_all_collisions(p['paths'])):
                     # take the child's solution as its own
-
                     print('Bypass successful. Taking the child\'s solution and pushing into open list..')
                     print('New Path:')
                     print(alt_path)                    
