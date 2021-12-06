@@ -90,7 +90,7 @@ def count_all_collisions(paths):
 
     print("number of collisions: ", collisions)
     return collisions    
-
+  
 def standard_splitting(collision):
     ##############################
     # Task 3.2: Return a list of (two) constraints to resolve the given collision
@@ -323,6 +323,7 @@ class CBSSolver(object):
         # algorithm for bypass
         # used for semi-cardinal and non-cardinal conflicts
         def find_bypass(self, p, collision, collision_type):
+            # return False
             assert collision_type != 'cardinal'
             new_constraints = standard_splitting(copy.deepcopy(collision))
             
@@ -345,9 +346,10 @@ class CBSSolver(object):
                 q['constraints'] = copy.deepcopy(a_constraints)
                 q['collisions'] = detect_collisions(copy.deepcopy(q['paths']))
                 q['cost'] = get_sum_of_cost(copy.deepcopy(q['paths']))
+
                 # if costs are the same and the new total number of conflicts are less
                 if q['cost'] == p['cost'] \
-                    and (count_all_collisions(q['paths']) < count_all_collisions(p['paths'])):
+                    and (len(q['collisions']) < len(p['collisions'])):
                     # take the child's solution as its own
                     print('Bypass successful. Taking the child\'s solution and pushing into open list..')
                     print('New Path:')
@@ -404,7 +406,7 @@ class CBSSolver(object):
         
         # normal CBS with disjoint and standard splitting
         while len(self.open_list) > 0:
-            # if self.num_of_generated > 60:
+            # if self.num_of_generated > 10000:
             #     print('reached maximum number of nodes. Returning...')
             #     return None
    
