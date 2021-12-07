@@ -88,7 +88,7 @@ def count_all_collisions(paths):
             ij_collisions = count_all_collisions_pair(paths[i],paths[j])
             collisions += ij_collisions
 
-    print("number of collisions: ", collisions)
+    # print("number of collisions: ", collisions)
     return collisions    
   
 def standard_splitting(collision):
@@ -233,7 +233,7 @@ class CBSSolver(object):
         self.num_of_expanded += 1
         return node
 
-    def find_solution(self, disjoint=True):
+    def find_solution(self, disjoint):
         """ Finds paths for all agents from their start locations to their goal locations
 
         disjoint    - use disjoint splitting or not
@@ -245,7 +245,6 @@ class CBSSolver(object):
             splitter = disjoint_splitting
         else:
             splitter = standard_splitting
-        print(disjoint)
         print("USING: ", splitter)
         # Generate the root node
         # constraints   - list of constraints
@@ -292,9 +291,9 @@ class CBSSolver(object):
             cardinality = 'non-cardinal'
             # new_constraints = disjoint_splitting(collision)
 
-            print('new constraints:')
-            for nc in new_constraints:
-                print(nc)
+            # print('new constraints:')
+            # for nc in new_constraints:
+            #     print(nc)
 
             for c in p['constraints']:
                 if c not in new_constraints:
@@ -302,7 +301,7 @@ class CBSSolver(object):
                         
             a1 = collision['a1'] #agent a1
             alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
-            print(alt_path1)
+            # print(alt_path1)
             if not alt_path1 or len(alt_path1) > len(p['paths'][a1]):
                 cardinality = 'semi-cardinal'
                 
@@ -310,7 +309,7 @@ class CBSSolver(object):
                 
             a2 = collision['a2'] #agent a2
             alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)
-            print(alt_path2)
+            # print(alt_path2)
             if not alt_path2 or len(alt_path2) > len(p['paths'][a2]):
                 if cardinality == 'semi-cardinal':
                     cardinality = 'cardinal'
@@ -327,17 +326,17 @@ class CBSSolver(object):
 
         # algorithm for bypass
         # used for semi-cardinal and non-cardinal conflicts
-        def find_bypass(self, p, collision, collision_type):
+        def find_bypass(self, p, new_constraints, collision_type):
             # return False
             assert collision_type != 'cardinal'
-            new_constraints = standard_splitting(copy.deepcopy(collision))
+            # new_constraints = standard_splitting(copy.deepcopy(collision))
             
             # loop version
             agents = ['a1', 'a2']
             for a in agents:
                 a_curr = collision[a] #current agent
                 
-                print('Current agent: ', a_curr)
+                # print('Current agent: ', a_curr)
                 a_constraints = copy.deepcopy(p['constraints'])
                 a_constraints.append(new_constraints[agents.index(a)])
                 alt_path = a_star(self.my_map,self.starts[a_curr], self.goals[a_curr],self.heuristics[a_curr],a_curr,new_constraints)
@@ -357,8 +356,8 @@ class CBSSolver(object):
                     and (len(q['collisions']) < len(p['collisions'])):
                     # take the child's solution as its own
                     print('Bypass successful. Taking the child\'s solution and pushing into open list..')
-                    print('New Path:')
-                    print(alt_path)                    
+                    # print('New Path:')
+                    # print(alt_path)                    
 
                     assert(p['cost'] == q['cost'])
                     self.push_node(q)
@@ -411,9 +410,9 @@ class CBSSolver(object):
         
         # normal CBS with disjoint and standard splitting
         while len(self.open_list) > 0:
-            # if self.num_of_generated > 10000:
-            #     print('reached maximum number of nodes. Returning...')
-            #     return None
+            if self.num_of_generated > 1000:
+                print('reached maximum number of nodes. Returning...')
+                return None
    
             p = self.pop_node()
             if p['collisions'] == []:
@@ -422,10 +421,10 @@ class CBSSolver(object):
                     print(pa)
                 return p['paths']
             print('Node expanded. Collisions: ', p['collisions'])
-            print('Paths: \n')
-            for i in range(len(p['paths'])):
+            # print('Paths: \n')
+            # for i in range(len(p['paths'])):
 
-                print(p['paths'][i])
+            #     print(p['paths'][i])
             print('Trying to find cardinal conflict.')
 
 
@@ -433,43 +432,44 @@ class CBSSolver(object):
             # if none, select a semi-cardinal conflict
             # if none, select a random conflict
             chosen_collision = None
+            new_constraints = None
             collision_type = None
             for collision in p['collisions']:
-                new_constraints = splitter(collision)
-                if detect_cardinal(self, new_constraints, p) == 'cardinal':
+                const = splitter(collision)
+                if detect_cardinal(self, const, p) == 'cardinal':
                     
                     print('Detected cardinal collision. Chose it.')
                     
                     chosen_collision = collision
                     collision_type = 'cardinal'
-            if not chosen_collision:
+                    new_constraints = const
+            if not new_constraints:
                 for collision in p['collisions']:
-                    new_constraints = splitter(collision)
-                    if detect_cardinal(self, new_constraints, p) == 'semi-cardinal':
+                    const = splitter(collision)
+                    if detect_cardinal(self, const, p) == 'semi-cardinal':
                         
                         print('Detected semi-cardinal collision. Chose it.')
                         
                         chosen_collision = collision
                         collision_type = 'semi-cardinal'
+                        new_constraints = const
     
-                if not chosen_collision:
+                if not new_constraints:
                     
                     chosen_collision = p['collisions'].pop(0) 
                     collision_type = 'non-cardinal'
-
+                    new_constraints = splitter(chosen_collision)
                     print('No cardinal or semi-cardinal conflict. Randomly choosing...')
-            print('Chosen collision: ', chosen_collision)
+            # print('Chosen collision: ', chosen_collision)
 
             # implementing bypassing conflicts
             # if collision_type != 'cardinal' and find_bypass(self,p, chosen_collision, collision_type):
             #         continue
-
-            if collision_type != 'cardinal'and find_bypass(self,p, chosen_collision, collision_type):
+            if collision_type != 'cardinal'and find_bypass(self,p, new_constraints, collision_type):
                 continue
 
             # constraints = standard_splitting(chosen_collision)
             constraints = splitter(chosen_collision)
-
             for constraint in constraints:
                 q = {'cost':0,
                     'constraints': [constraint],
