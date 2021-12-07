@@ -5,14 +5,38 @@ from single_agent_planner import compute_heuristics, a_star, get_location, get_s
 import math
 import copy
 
+'''
+# Developer's cNOTE regarding Python's mutable default arguments:
+#       The responsibiliy of preserving mutable values of passed arguments and 
+#       preventing retention of local mutable default values by assigning immuatable default values (e.i. arg=None) in parameters
+#       is the responsiblity of the function being called upon
+#       PEP 505 - None-aware operators: https://www.python.org/dev/peps/pep-0505/#syntax-and-semantics
+'''
 
-def detect_collision(path1, path2):
+def detect_collision(path1, path2, pos=None):
+    '''Return the first collision that occurs between two robot paths
+
+    Parameters
+    ----------
+    path1 : list
+        A list of tuples representing locations in the first agent's path
+    path2 : list
+        A list of tuples representing locations in the second agent's path
+
+    Returns
+    -------
+    list
+        a list of location(s) for the first vertex or edge collision
+    '''
     ##############################
     # Task 3.1: Return the first collision that occurs between two robot paths (or None if there is no collision)
     #           There are two types of collisions: vertex collision and edge collision.
     #           A vertex collision occurs if both robots occupy the same location at the same timestep
     #           An edge collision occurs if the robots swap their location at the same timestep.
     #           You should use "get_location(path, t)" to get the location of a robot at time t.
+
+    if pos is None:
+        pos = []
     t_range = max(len(path1),len(path2))
     for t in range(t_range):
         loc_c1 =get_location(path1,t)
@@ -20,29 +44,33 @@ def detect_collision(path1, path2):
         loc1 = get_location(path1,t+1)
         loc2 = get_location(path2,t+1)
         if loc1 == loc2:
-            return [loc1],t
+            pos.append(loc1)
+            return pos,t
         if[loc_c1,loc1] ==[loc2,loc_c2]:
-            return [loc2,loc_c2],t
+            pos.append(loc2)
+            pos.append(loc_c2)
+            return pos,t
         
        
     return None
     # pass
 
 
-def detect_collisions(paths):
+def detect_collisions(paths, collisions=None):
     ##############################
     # Task 3.1: Return a list of first collisions between all robot pairs.
     #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
     #           causing the collision, and the timestep at which the collision occurred.
     #           You should use your detect_collision function to find a collision between two robots.
-    collisions =[]
+    if collisions is None:
+        collisions = []
     for i in range(len(paths)-1):
         for j in range(i+1,len(paths)):
             if detect_collision(paths[i],paths[j]) !=None:
                 position,t = detect_collision(paths[i],paths[j])
                 collisions.append({'a1':i,
                                 'a2':j,
-                                'loc':position,
+                                'loc':copy.deepcopy(position),
                                 'timestep':t+1})
     return collisions
 
@@ -91,7 +119,7 @@ def count_all_collisions(paths):
     # print("number of collisions: ", collisions)
     return collisions    
   
-def standard_splitting(collision):
+def standard_splitting(collision, constraints=None):
     ##############################
     # Task 3.2: Return a list of (two) constraints to resolve the given collision
     #           Vertex collision: the first constraint prevents the first agent to be at the specified location at the
@@ -100,7 +128,9 @@ def standard_splitting(collision):
     #           Edge collision: the first constraint prevents the first agent to traverse the specified edge at the
     #                          specified timestep, and the second constraint prevents the second agent to traverse the
     #                          specified edge at the specified timestep
-    constraints = []
+    if constraints is None:
+        constraints = []
+
     if len(collision['loc'])==1:
         constraints.append({'agent':collision['a1'],
                             'loc':collision['loc'],
@@ -128,7 +158,7 @@ def standard_splitting(collision):
     # pass
 
 
-def disjoint_splitting(collision):
+def disjoint_splitting(collision, constraints=None):
     ##############################
     # Task 4.1: Return a list of (two) constraints to resolve the given collision
     #           Vertex collision: the first constraint enforces one agent to be at the specified location at the
@@ -138,7 +168,9 @@ def disjoint_splitting(collision):
     #                          specified timestep, and the second constraint prevents the same agent to traverse the
     #                          specified edge at the specified timestep
     #           Choose the agent randomly
-    constraints = []
+    if constraints is None:
+        constraints = []
+
     agent = random.randint(0,1)
     a = 'a'+str(agent +1)
     if len(collision['loc'])==1:
@@ -178,9 +210,11 @@ def disjoint_splitting(collision):
     return constraints
 
 
-def paths_violate_constraint(constraint, paths):
+def paths_violate_constraint(constraint, paths, rst=None):
     assert constraint['positive'] is True
-    rst = []
+    if rst is None:
+        rst = []
+
     for i in range(len(paths)):
         if i == constraint['agent']:
             continue
@@ -345,9 +379,9 @@ class CBSSolver(object):
                     }
                 q['paths'] = copy.deepcopy(p['paths'])
                 q['paths'][a_curr] = copy.deepcopy(alt_path)
-                q['constraints'] = copy.deepcopy(a_constraints)
-                q['collisions'] = detect_collisions(copy.deepcopy(q['paths']))
-                q['cost'] = get_sum_of_cost(copy.deepcopy(q['paths']))
+                q['constraints'] = a_constraints
+                q['collisions'] = detect_collisions(q['paths'])
+                q['cost'] = get_sum_of_cost(q['paths'])
 
                 # if costs are the same and the new total number of conflicts are less
                 if q['cost'] == p['cost'] \
