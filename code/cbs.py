@@ -241,7 +241,12 @@ class CBSSolver(object):
 
         self.start_time = timer.time()
         
-
+        if disjoint:
+            splitter = disjoint_splitting
+        else:
+            splitter = standard_splitting
+        print(disjoint)
+        print("USING: ", splitter)
         # Generate the root node
         # constraints   - list of constraints
         # paths         - list of paths, one for each agent
@@ -262,14 +267,14 @@ class CBSSolver(object):
         root['collisions'] = detect_collisions(root['paths'])
         self.push_node(root)
 
-        # Task 3.1: Testing
-        print(root['collisions'])
+        # # Task 3.1: Testing
+        # print(root['collisions'])
 
-        # Task 3.2: Testing
-        print('Root Collisions:')
-        for collision in root['collisions']:
-            # print(standard_splitting(collision))
-            print(disjoint_splitting(collision))
+        # # Task 3.2: Testing
+        # print('Root Collisions:')
+        # for collision in root['collisions']:
+        #     # print(standard_splitting(collision))
+        #     print(disjoint_splitting(collision))
 
 
         ##############################
@@ -283,9 +288,9 @@ class CBSSolver(object):
         
         # algorithm for detecting cardinality
         # as 'non-cardinal' or 'semi-cardinal' or 'cardinal'
-        def detect_cardinal(self, collision, p):
+        def detect_cardinal(self, new_constraints, p):
             cardinality = 'non-cardinal'
-            new_constraints = disjoint_splitting(collision)
+            # new_constraints = disjoint_splitting(collision)
 
             print('new constraints:')
             for nc in new_constraints:
@@ -430,7 +435,8 @@ class CBSSolver(object):
             chosen_collision = None
             collision_type = None
             for collision in p['collisions']:
-                if detect_cardinal(self, collision, p) == 'cardinal':
+                new_constraints = splitter(collision)
+                if detect_cardinal(self, new_constraints, p) == 'cardinal':
                     
                     print('Detected cardinal collision. Chose it.')
                     
@@ -438,7 +444,8 @@ class CBSSolver(object):
                     collision_type = 'cardinal'
             if not chosen_collision:
                 for collision in p['collisions']:
-                    if detect_cardinal(self, collision, p) == 'semi-cardinal':
+                    new_constraints = splitter(collision)
+                    if detect_cardinal(self, new_constraints, p) == 'semi-cardinal':
                         
                         print('Detected semi-cardinal collision. Chose it.')
                         
@@ -461,7 +468,7 @@ class CBSSolver(object):
                 continue
 
             # constraints = standard_splitting(chosen_collision)
-            constraints = disjoint_splitting(chosen_collision)
+            constraints = splitter(chosen_collision)
 
             for constraint in constraints:
                 q = {'cost':0,
