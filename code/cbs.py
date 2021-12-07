@@ -8,7 +8,7 @@ import copy
 '''
 # Developer's cNOTE regarding Python's mutable default arguments:
 #       The responsibiliy of preserving mutable values of passed arguments and 
-#       preventing retention of local mutable default values by assigning immuatable default values (e.i. arg=None) in parameters
+#       preventing retention of local mutable defaults by assigning immuatable default values (e.i. arg=None) in parameters
 #       is the responsiblity of the function being called upon
 #       PEP 505 - None-aware operators: https://www.python.org/dev/peps/pep-0505/#syntax-and-semantics
 '''
