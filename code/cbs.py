@@ -8,7 +8,7 @@ import copy
 '''
 # Developer's cNOTE regarding Python's mutable default arguments:
 #       The responsibiliy of preserving mutable values of passed arguments and 
-#       preventing retention of local mutable defaults by assigning immuatable default values (e.i. arg=None) in parameters
+#       preventing retention of local mutable defaults by assigning immuatable default values (i.e. param=None) in parameters
 #       is the responsiblity of the function being called upon
 #       PEP 505 - None-aware operators: https://www.python.org/dev/peps/pep-0505/#syntax-and-semantics
 '''
@@ -34,7 +34,7 @@ def detect_collision(path1, path2, pos=None):
     #           A vertex collision occurs if both robots occupy the same location at the same timestep
     #           An edge collision occurs if the robots swap their location at the same timestep.
     #           You should use "get_location(path, t)" to get the location of a robot at time t.
-
+    assert pos is None
     if pos is None:
         pos = []
     t_range = max(len(path1),len(path2))
@@ -70,7 +70,7 @@ def detect_collisions(paths, collisions=None):
                 position,t = detect_collision(paths[i],paths[j])
                 collisions.append({'a1':i,
                                 'a2':j,
-                                'loc':copy.deepcopy(position),
+                                'loc':position,
                                 'timestep':t+1})
     return collisions
 
@@ -229,6 +229,17 @@ def paths_violate_constraint(constraint, paths, rst=None):
                 rst.append(i)
     return rst
 
+def combined_constraints(constraints, new_constraints, updated_constraints=None):
+    assert updated_constraints is None
+    updated_constraints = copy.deepcopy(new_constraints)
+
+    for c in constraints:
+        if c not in updated_constraints:
+            updated_constraints.append(c)
+    print(new_constraints)
+    assert len(new_constraints) <= 2
+    assert len(updated_constraints) <= len(constraints) + len(new_constraints)
+    return updated_constraints
 
 class CBSSolver(object):
     """The high-level search of CBS."""
@@ -322,189 +333,291 @@ class CBSSolver(object):
         
         # algorithm for detecting cardinality
         # as 'non-cardinal' or 'semi-cardinal' or 'cardinal'
-        def detect_cardinal(self, nc, p):
-            cardinality = 'non-cardinal'
-            # new_constraints = disjoint_splitting(collision)
-            new_constraints =copy.deepcopy(nc)
 
-            for c in p['constraints']:
-                if c not in new_constraints:
-                    new_constraints.append(c)
-                        
-            a1 = collision['a1'] #agent a1
-            alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
-            if not alt_path1 or len(alt_path1) > len(p['paths'][a1]):
-                cardinality = 'semi-cardinal'
-                
-                # print('alt_path1 takes longer or is empty. at least semi-cardinal.')
-                
-            a2 = collision['a2'] #agent a2
-            alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)
-            # print(alt_path2)
-            if not alt_path2 or len(alt_path2) > len(p['paths'][a2]):
-                if cardinality == 'semi-cardinal':
-                    cardinality = 'cardinal'
-                    
-                    # print('identified cardinal conflict')
-  
-                else:
-                    cardinality = 'semi-cardinal'
-                    
-                    # print('alt_path2 takes longer or is empty. semi-cardinal.')   
-                
-            return cardinality   
+        # interpretation 2: cardinality <==> change in optimal costs
+        # REQUIRES only 1 cardinality
+        def detect_cardinality(self, disjoint, p, collision, nc, cardinalities=None):
 
-
-        # algorithm for bypass
-        # used for semi-cardinal and non-cardinal conflicts
-        def find_bypass(self, p, nc, collision_type):
-            # return False
             new_constraints = copy.deepcopy(nc)
-            assert collision_type != 'cardinal'
-            # new_constraints = standard_splitting(copy.deepcopy(collision))
-            
-            # loop version
-            # to do: iterate by constraints; for c in new_constraints
-            agents = ['a1', 'a2']
-            for a in agents:
-                # a_curr = collision[a] #current agent
-                a_curr = new_constraints[agents.index(a)]['agent']
-                a_constraints = copy.deepcopy(p['constraints'])
-                a_constraints.append(new_constraints[agents.index(a)])
-                alt_path = a_star(self.my_map,self.starts[a_curr], self.goals[a_curr],self.heuristics[a_curr],a_curr,new_constraints)
-                q = {'cost':0,
-                    'constraints': [],
-                    'paths':[],
-                    'collisions':[]
-                    }
-                q['paths'] = copy.deepcopy(p['paths'])
-                q['paths'][a_curr] = copy.deepcopy(alt_path)
-                q['constraints'] = a_constraints
-                q['collisions'] = detect_collisions(q['paths'])
-                q['cost'] = get_sum_of_cost(q['paths'])
 
-                # if costs are the same and the new total number of conflicts are less
-                if q['cost'] == p['cost'] \
-                    and (len(q['collisions']) < len(p['collisions'])):
-                    # take the child's solution as its own
-                    print('Bypass successful. Taking the child\'s solution and pushing into open list..')                
+            cardinality = 'non-cardinal' # optimal paths exist for both constraints
+            if disjoint:
+                assert new_constraints[0]['positive'] 
+                assert new_constraints[1]['positive'] == False
 
-                    assert(p['cost'] == q['cost'])
-                    self.push_node(q)
-                    return True
-            
-            print('Bypass failed. Continuing...')
+                # print(new_constraints)
+                assert len(new_constraints) == 2
+
+                # all_constraints_pos = combined_constraints(p['constraints'], new_constraints[0])
+                all_constraints_pos = copy.deepcopy(p['constraints'])
+                all_constraints_pos.append(new_constraints[0])
+
+
+                assert len(all_constraints_pos) == len(p['constraints']) +1
+
+                all_constraints_neg = copy.deepcopy(p['constraints'])
+                all_constraints_neg.append(new_constraints[1])
+                # the agent chosen in disjoint splitting for both positive and negative constraints
+                chosen_agent = new_constraints[0]['agent']
+
+                if collision['a1'] == chosen_agent:
+                    other_agent = collision['a2']
+                else:
+                    other_agent =  collision['a1']
+
+                # if interpretation works, list (2) should replaced by string (1)
+                cardinalities = ['non-cardinal', None]
+                ###########
+                # Find cardinality for positive constraint
+                # search for path for agent with positive constraint
+                cardinality = 'non-cardinal'
+                alt_path_chosen = a_star(self.my_map,self.starts[chosen_agent], self.goals[chosen_agent],self.heuristics[chosen_agent],chosen_agent,all_constraints_pos)
+                
+                # constraint can be met by chosen agent (must traverse conflict location/edge)                
+                assert alt_path_chosen and len(alt_path_chosen) == len(p['paths'][chosen_agent]) # if the collision occured, path which caused it likely exists
+
+
+
+                # # For debugging purposes: this path should exist, continue
+                # if alt_path_chosen and len(alt_path_chosen) == len(p['paths'][chosen_agent]):
+                #     print('\tagent: ', chosen_agent, ' must traverse conflict location/edge. keep going....')
+                # else: 
+                #     # this should not happen
+                #     print('\t !!! agent: ', chosen_agent, ' cannot meet positive constraint')
+                #     print('old_path: ', p['paths'][chosen_agent])
+                #     print('new_path: ', alt_path_chosen)
+                #     assert False
+
+                # check for all that violate constraint and search for paths
+                # 1. Find paths for all others that violate the constraint
+                # 2. check if cardinal..........   
+                
+                new_paths = copy.deepcopy(p['paths'])
+                new_paths[chosen_agent] = alt_path_chosen
+                print('pos constraint ', new_constraints[0])
+                # alt_path_other = None
+                path_failed = False     
+                alt_path_vols = paths_violate_constraint(new_constraints[0],new_paths)
+
+                
+                for v in alt_path_vols:
+                    path_v = a_star(self.my_map,self.starts[v], self.goals[v],self.heuristics[v],v,all_constraints_pos)
+                    if path_v  is None :
+                        path_failed = True
+                        break
+                    else:
+                        new_paths[v] = copy.deepcopy(path_v)
+
+                # a solution doesn't exist given constraints
+                new_cost = get_sum_of_cost(new_paths)
+                assert get_sum_of_cost(p['paths']) == p['cost']
+
+                if path_failed or new_cost > p['cost']:
+                    cardinality = 'semi-cardinal'
+                    cardinalities[0] = 'semi-cardinal'
+                    if path_failed:
+                        print('\t no solution exists given pos constraint')
+                    else:
+                        assert new_cost > p['cost']
+
+                        print('\t new solution will not be optimal given pos constraint')
+                        print('\t new cost: ', new_cost, ' org cost:', p['cost'])
+                else:
+                    print('\t optimal solution exists given pos constraint')
+
+
+
+                # negative constraint
+                new_paths = copy.deepcopy(p['paths'])
+                new_paths[chosen_agent] = alt_path_chosen
+                print('neg constraint ', new_constraints[1])
+                cardinality = 'non-cardinal'
+                alt_path_chosen = a_star(self.my_map,self.starts[chosen_agent], self.goals[chosen_agent],self.heuristics[chosen_agent],chosen_agent,all_constraints_neg)
+                
+                assert get_sum_of_cost(p['paths']) == p['cost']
+                if not alt_path_chosen or get_sum_of_cost(new_paths) > get_sum_of_cost(p['paths']):
+                    print('\t no solution exists given neg constraint OR new solution will not be optimal')
+
+                    if cardinalities[0] == 'semi-cardinal':
+                        cardinalities[0] = 'cardinal'
+                    else:
+                        cardinality = 'semi-cardinal'
+                        cardinalities[0] = 'semi-cardinal'
+                    # print('alt_path1 takes longer or is empty. at least semi-cardinal.')
+                else:
+                   print('\t optimal solution exists given neg constraint')
+
+                    # return cardinalities
+         
+                # alt_path_other = a_star(self.my_map,self.starts[other_agent], self.goals[other_agent],self.heuristics[other_agent],other_agent,all_constraints_neg)
+                # if not alt_path_other or len(alt_path_other) > len(p['paths'][other_agent]):
                     
+                #     # if cardinality == 'semi-cardinal':
+                #     if cardinalities[1] == 'semi-cardinal':
+                #         cardinality = 'semi-cardinal'
+                #         cardinalities[1] = 'semi-cardinal'
+                #     else:
+                #         cardinality = 'semi-cardinal'
+                #         cardinalities[1] = 'semi-cardinal'
+                    
+                #     print('\tagent: ', other_agent, ' can avoid conflict. semi-cardinal')     
+            print('cardinality: ', cardinalities[0])
+            return cardinalities
+
+
+
+        # # interpretation 1: cardinality == traversing conflict edge/vertex
+        # # REQUIRES 2 SEPARATE CARDINALITIES FOR EACH CONSTRAINT 
+ 
+
+        def bypass_found(curr_cost, new_cost, curr_collisions_num, new_collisions_num):
+            # return False
+            if curr_cost == new_cost \
+               and (new_collisions_num < curr_collisions_num):
+                return True
             return False
 
-            # non-loop version
-            # a1 = collision['a1'] #agent a1
-            # a2 = collision['a2'] #agent a2
-            # alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
-            # if alt_path1:
-            #     new_paths.append(alt_path1)
-            #     new_paths.append(p['paths'][a2])
-
-            # # if we find a helpful child
-            # if len(alt_path1) == len(p['paths'][a1]) \
-            #     and detect_all_collisions_pair(old_paths) < detect_all_collisions_pair(new_paths):
-            #     # take the child's solution as its own
-            #     p['paths'][a1] = copy.deepcopy(alt_path1)
-            #     p['constraints'] = copy.deepcopy(new_constraints)
-            #     p['collisions'] = detect_collisions(p['paths'])
-            #     p['cost'] = get_sum_of_cost(p['paths'])
-                
-            #     # push into open list
-            #     self.push_node(p)
-            #     return True
-    
-            # alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)    
-            # if alt_path2:
-            #     new_paths.append(p['paths'][a1])
-            #     new_paths.append(alt_path2)
-            
-            # # if we find a helpful child
-            # if len(alt_path2) == len(p['paths'][a2]) \
-            #     and detect_all_collisions_pair(old_paths) < detect_all_collisions_pair(new_paths):
-            #     # take the child's solution as its own
-            #     p['paths'][a2] = copy.deepcopy(alt_path2)
-            #     p['constraints'] = copy.deepcopy(new_constraints)
-            #     p['collisions'] = detect_collisions(p['paths'])
-            #     p['cost'] = get_sum_of_cost(p['paths'])
-                
-            #     # push into open list
-            #     self.push_node(p)
-            #     return True
-            
-            # return False
-        
         # normal CBS with disjoint and standard splitting
         while len(self.open_list) > 0:
-            if self.num_of_generated > 1000:
+            if self.num_of_generated > 50000:
                 print('reached maximum number of nodes. Returning...')
                 return None
-   
+            print('\n')
             p = self.pop_node()
             if p['collisions'] == []:
                 self.print_results(p)
                 for pa in p['paths']:
                     print(pa)
                 return p['paths']
-            print('Node expanded. Collisions: ', p['collisions'])
+            print('\nNode expanded. Collisions: ', p['collisions'])
             print('Trying to find cardinal conflict.')
 
-
+            # USING STANDARD SPLITTING
             # select a cardinal conflict;
             # if none, select a semi-cardinal conflict
             # if none, select a random conflict
+            collision_cardinalities = None
+            collision_cardinalities = []
             chosen_collision = None
             new_constraints = None
             collision_type = None
             for collision in p['collisions']:
-                
+                consts = None
                 consts = splitter(collision)
+
+
+
+                print(consts)
                 assert len(consts) == 2
-                if detect_cardinal(self, consts, p) == 'cardinal':
-                    
+
+
+
+                cardinalities = detect_cardinality(self, disjoint, p, collision, consts)
+                collision_cardinalities.append([cardinalities, consts]) # change to dictionary...
+                if cardinalities[0] == 'cardinal' and new_constraints is None:    
                     print('Detected cardinal collision. Chose it.')
-                    
+                    print(collision)
+                    assert collision
+
+
                     chosen_collision = collision
                     collision_type = 'cardinal'
-                    # new_constraints = copy.deepcopy(consts)
                     new_constraints = consts
-                    assert len(new_constraints) == 2
+                    break
+
+                # for cardinality in cardinalities:
+                #     if cardinality == 'cardinal' and new_constraints is None:    
+                #         print('Detected cardinal collision. Chose it.')
+                #         print(collision)
+                #         assert collision
+
+
+                #         chosen_collision = collision
+                #         collision_type = 'cardinal'
+                #         new_constraints = consts
+                #         break
+
 
             if not new_constraints:
+                assert new_constraints is None
+
+                
                 for collision in p['collisions']:
-                    consts = splitter(collision)
-                    if detect_cardinal(self, consts, p) == 'semi-cardinal':
+                    # consts = splitter(collision) ## NO....
+
+
+                    assert len(consts) == 2
+                    cardinalities = collision_cardinalities[p['collisions'].index(collision)][0]
+                    consts = collision_cardinalities[p['collisions'].index(collision)][1]
+                    assert len(consts) == 2
+                    if cardinalities[0] == 'semi-cardinal':    
                         
                         print('Detected semi-cardinal collision. Chose it.')
+                        print(collision)
                         
                         chosen_collision = collision
                         collision_type = 'semi-cardinal'
                         new_constraints = consts
-    
+                        break
+                    # for cardinality in cardinalities:
+                    #     if cardinality == 'semi-cardinal':    
+                            
+                    #         print('Detected semi-cardinal collision. Chose it.')
+                    #         print(collision)
+                            
+                    #         chosen_collision = collision
+                    #         collision_type = 'semi-cardinal'
+                    #         new_constraints = consts
+                    #         break
+                    # else: # no break occurred
+                    #     continue
+                    # break
+
                 if not new_constraints:
-                    
-                    chosen_collision = p['collisions'].pop(0) 
+                    assert new_constraints is None    
+                    chosen_collision = p['collisions'][0] 
+                    assert chosen_collision is not None
                     collision_type = 'non-cardinal'
-                    new_constraints = splitter(chosen_collision)
+                    cardinalities = ['non-cardinal', None]
+
+
+                    # new_constraints = splitter(chosen_collision)
+                    new_constraints = collision_cardinalities[0][1]
                     print('No cardinal or semi-cardinal conflict. Randomly choosing...')
             # print('Chosen collision: ', chosen_collision)
 
             # implementing bypassing conflicts
             # if collision_type != 'cardinal' and find_bypass(self,p, chosen_collision, collision_type):
             #         continue
-            if collision_type != 'cardinal'and find_bypass(self,p, copy.deepcopy(new_constraints), collision_type):
-                continue
+
 
             # constraints = standard_splitting(chosen_collision)
             # constraints = splitter(chosen_collision)
-            constraints = new_constraints
-            # print('NEW CONSTS:')
-            # print(new_constraints)
 
+
+
+
+            # ####### test #####33
+            # chosen_collision = p['collisions'][0] 
+            # assert chosen_collision is not None
+            # collision_type = 'non-cardinal'
+            # new_constraints = splitter(chosen_collision)
+
+
+
+            constraints = new_constraints
+
+
+
+
+            assert constraints is not None
+            print('NEW CONSTS:')
+            print(constraints)
+
+            # child_nodes = None
+            child_nodes = []
+            assert child_nodes == []
+            bypass_successful = False
             for constraint in constraints:
                 q = {'cost':0,
                     'constraints': [constraint],
@@ -534,10 +647,36 @@ class CBSSolver(object):
                                 q['paths'][v] = path_v
                         if continue_flag:
                             continue
-
+                    
                     q['collisions'] = detect_collisions(q['paths'])
                     q['cost'] = get_sum_of_cost(q['paths'])
-                    self.push_node(q)     
+                    # CHECK BYPASS HERE.......
+                    #     if q['cost'] == p['cost'] \
+                    #         and (len(q['collisions']) < len(p['collisions'])):
+
+                    # if bypass is found, push only the current child and exit loop
+                    cardinalities_index = p['collisions'].index(chosen_collision)
+                    if disjoint:
+                        # current_cardinality = collision_cardinalities[cardinalities_index][constraints.index(constraint)]
+                        current_cardinality = collision_cardinalities[cardinalities_index][0]
+                    else:
+                        current_cardinality = collision_cardinalities[cardinalities_index][0]
+                    if current_cardinality != 'cardinal' \
+                            and bypass_found(p['cost'], q['cost'], len(p['collisions']), len(q['collisions'])):
+                        # child_nodes.append(copy.deepcopy(q))
+                        print('bypass found')
+                        self.push_node(q)
+                        
+                        bypass_successful = True
+                        break
+                    child_nodes.append(copy.deepcopy(q))
+
+            # if bypass has not been found
+            if bypass_successful == False:
+                assert len(child_nodes) <= 2
+                print('bypass not found')
+                for n in child_nodes:
+                    self.push_node(n)     
         return None
 
 
