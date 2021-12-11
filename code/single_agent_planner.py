@@ -55,6 +55,7 @@ def build_constraint_table(constraints, agent):
     #               is_constrained function.
     table =dict()
     for constraint in constraints:
+
         if constraint['agent'] == agent:
             if constraint['timestep'] not in table:
                 table[constraint['timestep']] = [constraint]

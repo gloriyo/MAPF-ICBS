@@ -2,7 +2,7 @@ import time as timer
 import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
-
+import copy
 
 def detect_collision(path1, path2):
     ##############################
@@ -238,21 +238,50 @@ class CBSSolver(object):
         
         def detect_cardinal(self, collision, p):
             cardinality = 'non-cardinal'
-            
-            new_constraints = standard_splitting(collision)
+
+            q = copy.deepcopy(p)
+            # new_constraints = standard_splitting(collision)
+
+            new_constraints = disjoint_splitting(collision)
+
+            # for c in p['constraints']:
+            #     if c not in new_constraints:
+            #         new_constraints.append(c)
+
+            alt_constraint1 = [new_constraints[0]]
+            alt_constraint2 = [new_constraints[1]]
+
             for c in p['constraints']:
-                if c not in new_constraints:
-                    new_constraints.append(c)
-                        
+                if c not in alt_constraint1:
+                    alt_constraint1.append(c)
+                if c not in alt_constraint2:
+                    alt_constraint2.append(c)   
+
             a1 = collision['a1'] #agent a1
-            alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
-            if not alt_path1 or len(alt_path1) > len(p['paths'][a1]):
+         
+            alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,alt_constraint1)
+            q['paths'][a1] = alt_path1
+            
+            if new_constraints[0]['positive']:
+                vol = paths_violate_constraint(new_constraints[0],q['paths'])
+                for v in vol:
+                    path_v = a_star(self.my_map,self.starts[v], self.goals[v],self.heuristics[v],v,alt_constraint1)
+                    if path_v  is None:
+                        alt_path1 = None
+                        break
+                    else:
+                        q['paths'][v] = path_v
+            q['cost'] = get_sum_of_cost(q['paths'])
+
+
+            if not alt_path1 or q['cost'] > p['cost']:
                 cardinality = 'semi-cardinal'
-                
+            # if not alt_path1 or len(alt_path1)>len(p['paths'][a1]):
+            #     cardinality = 'semi-cardinal'    
                 print('alt_path1 takes longer or is empty. at least semi-cardinal.')
                 
             a2 = collision['a2'] #agent a2
-            alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)
+            alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,alt_constraint2)
             if not alt_path2 or len(alt_path2) > len(p['paths'][a2]):
                 if cardinality == 'semi-cardinal':
                     cardinality = 'cardinal'
