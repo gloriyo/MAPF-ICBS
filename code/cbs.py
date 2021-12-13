@@ -369,7 +369,7 @@ class CBSSolver(object):
 
                 all_constraints_neg = copy.deepcopy(p['constraints'])
                 all_constraints_neg.append(new_constraints[1])
-                
+
                 # the agent chosen in disjoint splitting for both positive and negative constraints
                 chosen_agent = new_constraints[0]['agent']
 
@@ -396,7 +396,7 @@ class CBSSolver(object):
                 # 2. check if cardinal..........   
                 
                 new_paths = copy.deepcopy(p['paths'])
-                new_paths[chosen_agent] = alt_path_chosen
+                new_paths[chosen_agent] = copy.deepcopy(alt_path_chosen)
                 print('pos constraint ', new_constraints[0])
                 path_failed = False     
                 alt_path_vols = paths_violate_constraint(new_constraints[0],new_paths)
@@ -410,7 +410,7 @@ class CBSSolver(object):
                     else:
                         new_paths[v] = copy.deepcopy(path_v)
 
-                # a solution doesn't exist given constraints
+                # a solution doesn't exist given positive constraint
                 new_cost = get_sum_of_cost(new_paths)
                 assert get_sum_of_cost(p['paths']) == p['cost']
 
@@ -429,13 +429,14 @@ class CBSSolver(object):
 
 
                 # negative constraint
-                new_paths = copy.deepcopy(p['paths'])
-                new_paths[chosen_agent] = alt_path_chosen
                 print('neg constraint ', new_constraints[1])
                 alt_path_chosen = a_star(self.my_map,self.starts[chosen_agent], self.goals[chosen_agent],self.heuristics[chosen_agent],chosen_agent,all_constraints_neg)
-                
+                # new_paths = copy.deepcopy(p['paths'])
+                # new_paths[chosen_agent] = copy.deepcopy(alt_path_chosen)
+
                 assert get_sum_of_cost(p['paths']) == p['cost']
-                if not alt_path_chosen or get_sum_of_cost(new_paths) > get_sum_of_cost(p['paths']):
+                # if not alt_path_chosen or get_sum_of_cost(new_paths) > p['cost']:
+                if not alt_path_chosen or len(alt_path_chosen) > len(p['paths'][chosen_agent]): # only alt_path_chosen will affect cost
                     print('\t no solution exists given neg constraint OR new solution will not be optimal')
 
                     if cardinality == 'semi-cardinal':
@@ -444,8 +445,8 @@ class CBSSolver(object):
                         cardinality = 'semi-cardinal'
                 else:
                    print('\t optimal solution exists given neg constraint')
-            else:    
-                detect_cardinality_standard(self, p ,collision)
+            else: # standard splitting
+                cardinality = detect_cardinality_standard(self, p ,collision)
             return cardinality
 
 
