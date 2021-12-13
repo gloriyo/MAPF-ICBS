@@ -85,6 +85,8 @@ if __name__ == '__main__':
 
     result_file = open("results.csv", "w", buffering=1)
 
+    node_results_file = open("nodes-results.csv", "w", buffering=1)
+
     for file in sorted(glob.glob(args.instance)):
 
         print("***Import an instance***")
@@ -95,20 +97,22 @@ if __name__ == '__main__':
         if args.solver == "CBS":
             print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, goals)
-            paths = cbs.find_solution(args.disjoint)
+            paths, nodes_gen, nodes_exp = cbs.find_solution(args.disjoint)
         elif args.solver == "Independent":
             print("***Run Independent***")
             solver = IndependentSolver(my_map, starts, goals)
-            paths = solver.find_solution()
+            paths, nodes_gen, nodes_exp = solver.find_solution()
         elif args.solver == "Prioritized":
             print("***Run Prioritized***")
             solver = PrioritizedPlanningSolver(my_map, starts, goals)
-            paths = solver.find_solution()
+            paths, nodes_gen, nodes_exp = solver.find_solution()
         else:
             raise RuntimeError("Unknown solver!")
 
         cost = get_sum_of_cost(paths)
         result_file.write("{},{}\n".format(file, cost))
+
+        node_results_file.write("{}\n{},{}\n".format(file, nodes_gen, nodes_exp))
 
 
         if not args.batch:
