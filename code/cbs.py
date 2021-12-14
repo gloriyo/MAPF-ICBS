@@ -311,7 +311,7 @@ class CBSSolver(object):
         # as 'non-cardinal' or 'semi-cardinal' or 'cardinal'
 
         # method a: use standard splitting to detect a 'cardinal collision'
-        def detect_cardinality_standard(self, p, collision):
+        def detect_cardinal_conflict(self, p, collision):
             cardinality = 'non-cardinal'
             new_constraints = standard_splitting(collision)
 
@@ -349,6 +349,8 @@ class CBSSolver(object):
 
     
         # method b: cardinality <==> change in optimal costs
+        #   possibly uncessary; a cardinal conflict will always cause an increase in cost, 
+        #   therefore standard splitting method is sufficient 
         def detect_cardinality(self, disjoint, p, collision, nc):
 
             new_constraints = copy.deepcopy(nc)
@@ -446,7 +448,7 @@ class CBSSolver(object):
                 else:
                    print('\t optimal solution exists given neg constraint')
             else: # standard splitting
-                cardinality = detect_cardinality_standard(self, p ,collision)
+                cardinality = detect_cardinal_conflict(self, p ,collision)
             return cardinality
 
 
@@ -497,9 +499,9 @@ class CBSSolver(object):
 
 
 
-                # cardinality = detect_cardinality_standard(self, p, collision)
+                cardinality = detect_cardinal_conflict(self, p, collision)
 
-                cardinality = detect_cardinality(self, disjoint, p, collision, consts) # method b: costs
+                # cardinality = detect_cardinality(self, disjoint, p, collision, consts) # method b: costs
 
 
 
