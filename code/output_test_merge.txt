@@ -1,0 +1,126 @@
+***Import an instance***
+instances/test_1.txt
+Start locations
+3 . @ . . . . . 
+4 0 . @ . . . . 
+. . @ . . . . . 
+. . . . . . . . 
+. . . 2 . . . @ 
+. . . . . @ . . 
+. . . . . . @ . 
+. . . . . . 1 . 
+
+Goal locations
+1 . @ . . . . . 
+. 2 . @ . . . . 
+. . @ . . . . . 
+0 . . . . . . . 
+. . . . . . . @ 
+. . . . 3 @ 4 . 
+. . . . . . @ . 
+. . . . . . . . 
+
+***Run CBS***
+USING:  <function disjoint_splitting at 0x7f238c615b80>
+Generate node 0
+
+
+Expand node 0
+
+Node expanded. Collisions:  [{'a1': 0, 'a2': 4, 'loc': [(1, 1), (1, 0)], 'timestep': 1}, {'a1': 1, 'a2': 2, 'loc': [(1, 1)], 'timestep': 11}, {'a1': 1, 'a2': 3, 'loc': [(3, 4), (3, 3)], 'timestep': 7}, {'a1': 1, 'a2': 4, 'loc': [(3, 4)], 'timestep': 6}, {'a1': 2, 'a2': 3, 'loc': [(3, 1), (2, 1)], 'timestep': 4}, {'a1': 2, 'a2': 4, 'loc': [(3, 1)], 'timestep': 3}]
+Trying to find cardinal conflict.
+[{'agent': 4, 'loc': [(1, 0), (1, 1)], 'timestep': 1, 'positive': True}, {'agent': 4, 'loc': [(1, 0), (1, 1)], 'timestep': 1, 'positive': False}]
+new constraints:
+{'agent': 0, 'loc': [(1, 1), (1, 0)], 'timestep': 1, 'positive': False}
+{'agent': 4, 'loc': [(1, 0), (1, 1)], 'timestep': 1, 'positive': False}
+[(1, 1), (2, 1), (2, 0), (3, 0)]
+[(1, 0), (2, 0), (2, 1), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (4, 6), (5, 6)]
+[{'agent': 2, 'loc': [(1, 1)], 'timestep': 11, 'positive': True}, {'agent': 2, 'loc': [(1, 1)], 'timestep': 11, 'positive': False}]
+new constraints:
+{'agent': 1, 'loc': [(1, 1)], 'timestep': 11, 'positive': False}
+{'agent': 2, 'loc': [(1, 1)], 'timestep': 11, 'positive': False}
+[(7, 6), (7, 5), (6, 5), (6, 4), (5, 4), (4, 4), (3, 4), (3, 3), (3, 2), (3, 1), (2, 1), (2, 0), (1, 0), (0, 0)]
+[(4, 3), (3, 3), (3, 2), (3, 1), (2, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (0, 1), (1, 1)]
+alt_path2 takes longer or is empty. semi-cardinal.
+[{'agent': 3, 'loc': [(3, 3), (3, 4)], 'timestep': 7, 'positive': True}, {'agent': 3, 'loc': [(3, 3), (3, 4)], 'timestep': 7, 'positive': False}]
+new constraints:
+{'agent': 1, 'loc': [(3, 4), (3, 3)], 'timestep': 7, 'positive': False}
+{'agent': 3, 'loc': [(3, 3), (3, 4)], 'timestep': 7, 'positive': False}
+[(7, 6), (7, 5), (6, 5), (6, 4), (5, 4), (4, 4), (4, 3), (3, 3), (3, 2), (3, 1), (2, 1), (1, 1), (0, 1), (0, 0)]
+[(0, 0), (0, 1), (1, 1), (2, 1), (3, 1), (3, 2), (3, 3), (4, 3), (4, 4), (5, 4)]
+[{'agent': 4, 'loc': [(3, 4)], 'timestep': 6, 'positive': True}, {'agent': 4, 'loc': [(3, 4)], 'timestep': 6, 'positive': False}]
+new constraints:
+{'agent': 1, 'loc': [(3, 4)], 'timestep': 6, 'positive': False}
+{'agent': 4, 'loc': [(3, 4)], 'timestep': 6, 'positive': False}
+[(7, 6), (7, 5), (6, 5), (6, 4), (5, 4), (4, 4), (4, 3), (3, 3), (3, 2), (3, 1), (2, 1), (1, 1), (0, 1), (0, 0)]
+[(1, 0), (1, 1), (2, 1), (3, 1), (3, 2), (3, 3), (4, 3), (4, 4), (4, 5), (4, 6), (5, 6)]
+[{'agent': 2, 'loc': [(3, 1), (2, 1)], 'timestep': 4, 'positive': True}, {'agent': 2, 'loc': [(3, 1), (2, 1)], 'timestep': 4, 'positive': False}]
+new constraints:
+{'agent': 2, 'loc': [(3, 1), (2, 1)], 'timestep': 4, 'positive': False}
+{'agent': 3, 'loc': [(2, 1), (3, 1)], 'timestep': 4, 'positive': False}
+[(4, 3), (3, 3), (3, 2), (3, 1), (3, 1), (2, 1), (1, 1)]
+alt_path1 takes longer or is empty. at least semi-cardinal.
+[(0, 0), (1, 0), (2, 0), (3, 0), (3, 1), (3, 2), (3, 3), (3, 4), (4, 4), (5, 4)]
+[{'agent': 4, 'loc': [(3, 1)], 'timestep': 3, 'positive': True}, {'agent': 4, 'loc': [(3, 1)], 'timestep': 3, 'positive': False}]
+new constraints:
+{'agent': 2, 'loc': [(3, 1)], 'timestep': 3, 'positive': False}
+{'agent': 4, 'loc': [(3, 1)], 'timestep': 3, 'positive': False}
+[(4, 3), (3, 3), (3, 2), (3, 2), (3, 1), (2, 1), (1, 1)]
+alt_path1 takes longer or is empty. at least semi-cardinal.
+[(1, 0), (2, 0), (3, 0), (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (5, 6)]
+Detected semi-cardinal collision. Chose it.
+{'a1': 1, 'a2': 2, 'loc': [(1, 1)], 'timestep': 11}
+NEW CONSTS:
+[{'agent': 2, 'loc': [(1, 1)], 'timestep': 11, 'positive': True}, {'agent': 2, 'loc': [(1, 1)], 'timestep': 11, 'positive': False}]
+bypass found
+Generate node 1
+
+
+Expand node 1
+
+Node expanded. Collisions:  [{'a1': 0, 'a2': 4, 'loc': [(1, 1), (1, 0)], 'timestep': 1}, {'a1': 1, 'a2': 3, 'loc': [(3, 4), (3, 3)], 'timestep': 7}, {'a1': 1, 'a2': 4, 'loc': [(3, 4)], 'timestep': 6}, {'a1': 2, 'a2': 3, 'loc': [(3, 1), (2, 1)], 'timestep': 4}, {'a1': 2, 'a2': 4, 'loc': [(3, 1)], 'timestep': 3}]
+Trying to find cardinal conflict.
+[{'agent': 4, 'loc': [(1, 0), (1, 1)], 'timestep': 1, 'positive': True}, {'agent': 4, 'loc': [(1, 0), (1, 1)], 'timestep': 1, 'positive': False}]
+new constraints:
+{'agent': 0, 'loc': [(1, 1), (1, 0)], 'timestep': 1, 'positive': False}
+{'agent': 4, 'loc': [(1, 0), (1, 1)], 'timestep': 1, 'positive': False}
+[(1, 1), (2, 1), (2, 0), (3, 0)]
+[(1, 0), (2, 0), (2, 1), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (4, 6), (5, 6)]
+[{'agent': 3, 'loc': [(3, 3), (3, 4)], 'timestep': 7, 'positive': True}, {'agent': 3, 'loc': [(3, 3), (3, 4)], 'timestep': 7, 'positive': False}]
+new constraints:
+{'agent': 1, 'loc': [(3, 4), (3, 3)], 'timestep': 7, 'positive': False}
+{'agent': 3, 'loc': [(3, 3), (3, 4)], 'timestep': 7, 'positive': False}
+[(7, 6), (7, 5), (6, 5), (6, 4), (5, 4), (4, 4), (4, 3), (3, 3), (3, 2), (3, 1), (2, 1), (2, 0), (1, 0), (0, 0)]
+[(0, 0), (0, 1), (1, 1), (2, 1), (3, 1), (3, 2), (3, 3), (4, 3), (4, 4), (5, 4)]
+[{'agent': 1, 'loc': [(3, 4)], 'timestep': 6, 'positive': True}, {'agent': 1, 'loc': [(3, 4)], 'timestep': 6, 'positive': False}]
+new constraints:
+{'agent': 1, 'loc': [(3, 4)], 'timestep': 6, 'positive': False}
+{'agent': 4, 'loc': [(3, 4)], 'timestep': 6, 'positive': False}
+[(7, 6), (7, 5), (6, 5), (6, 4), (5, 4), (4, 4), (4, 3), (3, 3), (3, 2), (3, 1), (2, 1), (2, 0), (1, 0), (0, 0)]
+[(1, 0), (1, 1), (2, 1), (3, 1), (3, 2), (3, 3), (4, 3), (4, 4), (4, 5), (4, 6), (5, 6)]
+[{'agent': 3, 'loc': [(2, 1), (3, 1)], 'timestep': 4, 'positive': True}, {'agent': 3, 'loc': [(2, 1), (3, 1)], 'timestep': 4, 'positive': False}]
+new constraints:
+{'agent': 2, 'loc': [(3, 1), (2, 1)], 'timestep': 4, 'positive': False}
+{'agent': 3, 'loc': [(2, 1), (3, 1)], 'timestep': 4, 'positive': False}
+[(4, 3), (3, 3), (3, 2), (3, 1), (3, 1), (2, 1), (1, 1)]
+alt_path1 takes longer or is empty. at least semi-cardinal.
+[(0, 0), (1, 0), (2, 0), (3, 0), (3, 1), (3, 2), (3, 3), (3, 4), (4, 4), (5, 4)]
+[{'agent': 2, 'loc': [(3, 1)], 'timestep': 3, 'positive': True}, {'agent': 2, 'loc': [(3, 1)], 'timestep': 3, 'positive': False}]
+new constraints:
+{'agent': 2, 'loc': [(3, 1)], 'timestep': 3, 'positive': False}
+{'agent': 4, 'loc': [(3, 1)], 'timestep': 3, 'positive': False}
+[(4, 3), (3, 3), (3, 2), (3, 2), (3, 1), (2, 1), (1, 1)]
+alt_path1 takes longer or is empty. at least semi-cardinal.
+[(1, 0), (2, 0), (3, 0), (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (5, 6)]
+Detected semi-cardinal collision. Chose it.
+{'a1': 2, 'a2': 3, 'loc': [(3, 1), (2, 1)], 'timestep': 4}
+NEW CONSTS:
+[{'agent': 3, 'loc': [(2, 1), (3, 1)], 'timestep': 4, 'positive': True}, {'agent': 3, 'loc': [(2, 1), (3, 1)], 'timestep': 4, 'positive': False}]
+count sdfasdf              1
+True
+agents 2, 3 should merge
+asdfasdfasdfasdf                               True
+count sdfasdf              1
+True
+agents 2, 3 should merge
+agents 2, 3 merged into agent 5

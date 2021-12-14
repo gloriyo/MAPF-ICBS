@@ -217,6 +217,18 @@ def combined_constraints(constraints, new_constraints, updated_constraints=None)
     assert len(updated_constraints) <= len(constraints) + len(new_constraints)
     return updated_constraints
 
+
+def bypass_found(curr_cost, new_cost, curr_collisions_num, new_collisions_num):
+    # return False
+    if curr_cost == new_cost \
+        and (new_collisions_num < curr_collisions_num):
+        return True
+    return False
+
+
+
+
+
 class CBSSolver(object):
     """The high-level search of CBS."""
 
@@ -230,7 +242,7 @@ class CBSSolver(object):
         self.starts = starts
         self.goals = goals
         self.num_of_agents = len(goals)
-
+        # self.discarded_agents = []
         self.num_of_generated = 0
         self.num_of_expanded = 0
         self.CPU_time = 0
@@ -254,6 +266,7 @@ class CBSSolver(object):
         self.num_of_expanded += 1
         return node
 
+
     def find_solution(self, disjoint):
         """ Finds paths for all agents from their start locations to their goal locations
 
@@ -275,14 +288,23 @@ class CBSSolver(object):
         # collisions     - list of collisions in paths
         root = {'cost': 0,
                 'constraints': [],
-                'paths': [],
-                'collisions': []}
+                # 'paths': [],
+                'agents': {},
+                'collisions': [],
+                'discarded_agents': []}
         for i in range(self.num_of_agents):  # Find initial path for each agent
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
                           i, root['constraints'])
             if path is None:
                 raise BaseException('No solutions')
-            root['paths'].append(path)
+            # root['paths'].append(path)
+
+            # thank you Gloria!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            
+            root['agents'][i] = {
+                'path': path[i],
+                'coupled_agents': [i]
+            }
 
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
@@ -306,11 +328,11 @@ class CBSSolver(object):
         #             3. Otherwise, choose the first collision and convert to ap['collisions'].index(chosen_collision)list of constraints (using your
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
-        
+
+
         # algorithm for detecting cardinality
         # as 'non-cardinal' or 'semi-cardinal' or 'cardinal'
-
-        # method a: use standard splitting to detect a 'cardinal collision'
+        # using standard splitting
         def detect_cardinal_conflict(self, p, collision):
             cardinality = 'non-cardinal'
             new_constraints = standard_splitting(collision)
@@ -339,129 +361,97 @@ class CBSSolver(object):
                     cardinality = 'cardinal'
                     
                     print('identified cardinal conflict')
-  
+
                 else:
                     cardinality = 'semi-cardinal'
                     
                     print('alt_path2 takes longer or is empty. semi-cardinal.')   
                 
-            return cardinality   
-
-    
-        # method b: cardinality <==> change in optimal costs
-        #   possibly uncessary; a cardinal conflict will always cause an increase in cost, 
-        #   therefore standard splitting method is sufficient 
-        def detect_cardinality(self, disjoint, p, collision, nc):
-
-            new_constraints = copy.deepcopy(nc)
-
-            cardinality = 'non-cardinal' # optimal paths exist for both constraints
-            if disjoint:
-                assert new_constraints[0]['positive'] 
-                assert new_constraints[1]['positive'] == False
-
-                # print(new_constraints)
-                assert len(new_constraints) == 2
-
-                all_constraints_pos = copy.deepcopy(p['constraints'])
-                all_constraints_pos.append(new_constraints[0])
-
-
-                assert len(all_constraints_pos) == len(p['constraints']) +1
-
-                all_constraints_neg = copy.deepcopy(p['constraints'])
-                all_constraints_neg.append(new_constraints[1])
-
-                # the agent chosen in disjoint splitting for both positive and negative constraints
-                chosen_agent = new_constraints[0]['agent']
-
-                ###########
-                # Find cardinality for positive constraint
-                # search for path for agent with positive constraint
-                alt_path_chosen = a_star(self.my_map,self.starts[chosen_agent],self.goals[chosen_agent],self.heuristics[chosen_agent],chosen_agent,all_constraints_pos)
-                
-                # constraint can be met by chosen agent (must traverse conflict location/edge)                
-                assert alt_path_chosen and len(alt_path_chosen) == len(p['paths'][chosen_agent]) # if the collision occured, path which caused it likely exists
-
-                # # For debugging purposes only: this path should exist, continue
-                # if alt_path_chosen and len(alt_path_chosen) == len(p['paths'][chosen_agent]):
-                #     print('\tagent: ', chosen_agent, ' must traverse conflict location/edge. keep going....')
-                # else: 
-                #     # this should not happen
-                #     print('\t !!! agent: ', chosen_agent, ' cannot meet positive constraint')
-                #     print('old_path: ', p['paths'][chosen_agent])
-                #     print('new_path: ', alt_path_chosen)
-                #     assert False
-
-                # check for all that violate constraint and search for paths
-                # 1. Find paths for all others that violate the constraint
-                # 2. check if cardinal..........   
-                
-                new_paths = copy.deepcopy(p['paths'])
-                new_paths[chosen_agent] = copy.deepcopy(alt_path_chosen)
-                print('pos constraint ', new_constraints[0])
-                path_failed = False     
-                alt_path_vols = paths_violate_constraint(new_constraints[0],new_paths)
-
-                
-                for v in alt_path_vols:
-                    path_v = a_star(self.my_map,self.starts[v], self.goals[v],self.heuristics[v],v,all_constraints_pos)
-                    if path_v  is None :
-                        path_failed = True
-                        break
-                    else:
-                        new_paths[v] = copy.deepcopy(path_v)
-
-                # a solution doesn't exist given positive constraint
-                new_cost = get_sum_of_cost(new_paths)
-                assert get_sum_of_cost(p['paths']) == p['cost']
-
-                if path_failed or new_cost > p['cost']:
-                    cardinality = 'semi-cardinal'
-                    if path_failed:
-                        print('\t no solution exists given pos constraint')
-                    else:
-                        assert new_cost > p['cost']
-
-                        print('\t new solution will not be optimal given pos constraint')
-                        print('\t new cost: ', new_cost, ' org cost:', p['cost'])
-                else:
-                    print('\t optimal solution exists given pos constraint')
-
-
-
-                # negative constraint
-                print('neg constraint ', new_constraints[1])
-                alt_path_chosen = a_star(self.my_map,self.starts[chosen_agent], self.goals[chosen_agent],self.heuristics[chosen_agent],chosen_agent,all_constraints_neg)
-                # new_paths = copy.deepcopy(p['paths'])
-                # new_paths[chosen_agent] = copy.deepcopy(alt_path_chosen)
-
-                assert get_sum_of_cost(p['paths']) == p['cost']
-                # if not alt_path_chosen or get_sum_of_cost(new_paths) > p['cost']:
-                if not alt_path_chosen or len(alt_path_chosen) > len(p['paths'][chosen_agent]): # only alt_path_chosen will affect cost
-                    print('\t no solution exists given neg constraint OR new solution will not be optimal')
-
-                    if cardinality == 'semi-cardinal':
-                        cardinality = 'cardinal'
-                    else:
-                        cardinality = 'semi-cardinal'
-                else:
-                   print('\t optimal solution exists given neg constraint')
-            else: # standard splitting
-                cardinality = detect_cardinal_conflict(self, p ,collision)
             return cardinality
-
-
-
  
-
-        def bypass_found(curr_cost, new_cost, curr_collisions_num, new_collisions_num):
-            # return False
-            if curr_cost == new_cost \
-               and (new_collisions_num < curr_collisions_num):
+        def should_merge(collision, p, N=0):
+           
+            a1 = collision['a1']
+            a2 = collision['a2']
+    
+            if count_all_collisions_pair(p['paths'][a1], p['paths'][a2]) >= N:
                 return True
+                
             return False
 
+        # returns a new node with merged agents, based on collision at hand
+        def merge_agents(self, collision, p):
+
+            # constraints = standard_splitting(collision)
+            
+            a1 = collision['a1']
+            a2 = collision['a2']
+
+            new_node = {
+                'cost':0,
+                'constraints':[],
+                # 'paths':[],
+                'agents': {}
+                'collisions':[],
+                'discarded_agents':[]
+            }
+
+
+            new_agents = copy.deepcopy(p['agents'])
+            # paths 
+            # INCOMPLETE
+            for i in range(len(new_agents)):            
+                new_node['agents'][i] = {
+                    'path': path[i],
+                    'coupled_agents': DEEPPPPPPCOPY BYE  LOL
+                }
+
+            
+            meta_agent = len(p['paths']) # index in p['paths']
+
+            print('agents {}, {} merged into agent {}'.format(a1, a2, meta_agent))
+
+            for da in p['discarded_agents']:
+                new_node['discarded_agents'].append(da)
+
+            new_node['discarded_agents'].append(a1)
+            new_node['discarded_agents'].append(a2)
+
+
+            # # merge constraints
+            new_node['constraints'] = copy.deepcopy(p['constraints'])
+            # for c in new_node['constraints']:
+            #     if c['agent'] == a1 or c['agent'] == a2:
+            #         c['agent'] = meta_agent
+            
+
+            # # solve new group
+            # paths for agents in meta-agent
+            # group 1
+            for a in group1:
+                a1_path = a_star(self.my_map,self.starts[a1], self.goals[a1], self.heuristics[a1], \
+                            a1,new_node['constraints'])
+            # group_2
+            for a in group2:
+                a2_path = a_star(self.my_map,self.starts[a2], self.goals[a2], self.heuristics[a2], \
+                            a2,new_node['constraints'])
+
+            # meta_agent path
+            ma_path = a_star(self.my_map,self.starts[meta_agent], self.goals[meta_agent], self.heuristics[meta_agent], \
+                            meta_agent,new_node['constraints'])
+
+            assert ma_path
+            
+
+            new_node['paths'][meta_agent] = ma_path
+            new_node['collisions'] = detect_collisions(new_node['paths'])
+            new_node['cost'] = get_sum_of_cost(new_node['paths'])
+
+            assert new_node
+            return new_node       
+
+
+            
         # normal CBS with disjoint and standard splitting
         while len(self.open_list) > 0:
             if self.num_of_generated > 50000:
@@ -492,39 +482,28 @@ class CBSSolver(object):
                 consts = None
                 consts = splitter(collision)
 
-
-
                 print(consts)
                 assert len(consts) == 2
-
-
 
                 cardinality = detect_cardinal_conflict(self, p, collision)
 
                 # cardinality = detect_cardinality(self, disjoint, p, collision, consts) # method b: costs
-
-
-
                 collision_cardinalities.append([cardinality, consts]) # change to dictionary...
                 if cardinality == 'cardinal' and new_constraints is None:    
                     print('Detected cardinal collision. Chose it.')
                     print(collision)
                     assert collision
 
-
                     chosen_collision = collision
                     collision_type = 'cardinal'
                     new_constraints = consts
                     break
 
-
             if not new_constraints:
                 assert new_constraints is None
-
                 
                 for collision in p['collisions']:
                     # consts = splitter(collision) ## NO....
-
 
                     assert len(consts) == 2
                     cardinality = collision_cardinalities[p['collisions'].index(collision)][0]
@@ -554,8 +533,6 @@ class CBSSolver(object):
             # implementing bypassing conflicts
             # if collision_type != 'cardinal' and find_bypass(self,p, chosen_collision, collision_type):
             #         continue
-
-
             assert new_constraints is not None
             print('NEW CONSTS:')
             print(new_constraints)
@@ -568,13 +545,17 @@ class CBSSolver(object):
                 q = {'cost':0,
                     'constraints': [constraint],
                     'paths':[],
-                    'collisions':[]
+                    'collisions':[],
+                    'discarded_agents': []
                 }
                 for c in p['constraints']:
                     if c not in q['constraints']:
                         q['constraints'].append(c)
                 for pa in p['paths']:
                     q['paths'].append(pa)
+                
+                for da in p['discarded_agents']:
+                    q['discarded_agents'].append(da)
                 
                 ai = constraint['agent']
                 path = a_star(self.my_map,self.starts[ai], self.goals[ai],self.heuristics[ai],ai,q['constraints'])
@@ -614,15 +595,29 @@ class CBSSolver(object):
                         self.push_node(q)
                         
                         bypass_successful = True
-                        break
+                        break # break out of constraint loop
                     child_nodes.append(copy.deepcopy(q))
 
             # if bypass has not been found
-            if bypass_successful == False:
+            if not bypass_successful:
+
+                # MA-CBS
+                print('asdfasdfasdfasdf                              ',should_merge(collision,p))
+                if should_merge(collision,p):
+                    q_with_new_agent = merge_agents(self, collision, p)
+                    
+                    # Merge & restart
+                    # if merge_restart():
+                        # restart_search()
+                    self.push_node(q_with_new_agent)    
+                    continue
+
+                
                 assert len(child_nodes) <= 2
                 print('bypass not found')
                 for n in child_nodes:
                     self.push_node(n)     
+                    
         return None
 
 
