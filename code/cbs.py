@@ -387,68 +387,81 @@ class CBSSolver(object):
             a1 = collision['a1']
             a2 = collision['a2']
 
-            new_node = {
+            group1 = {a1}
+            group2 = {a2}
+
+            # child node with new meta agent # to-do move node init after 
+            q = {
                 'cost':0,
-                'constraints':[],
+                'constraints': copy.deepcopy(p['constraints']),
                 # 'paths':[],
-                'agents': {}
-                'collisions':[],
-                'discarded_agents':[]
+                'agents': copy.deepcopy(p['agents']), # {0: {'path':[..path...]}, ... , n: {'path':[..path...]} # not sure if other keys are needed
+                'collisions': None,
+                'group_collisions':copy.deepcopy(p['group_collisions']), # list of sets of numbers of collisions between (meta-)agents
+                'meta_agents': copy.deepcopy(p['meta_agents']) # [{a1,a2}, ... ]
             }
 
-
-            new_agents = copy.deepcopy(p['agents'])
-            # paths 
-            # INCOMPLETE
-            for i in range(len(new_agents)):            
-                new_node['agents'][i] = {
-                    'path': path[i],
-                    'coupled_agents': DEEPPPPPPCOPY BYE  LOL
-                }
-
-            
-            meta_agent = len(p['paths']) # index in p['paths']
-
-            print('agents {}, {} merged into agent {}'.format(a1, a2, meta_agent))
-
-            for da in p['discarded_agents']:
-                new_node['discarded_agents'].append(da)
-
-            new_node['discarded_agents'].append(a1)
-            new_node['discarded_agents'].append(a2)
-
-
-            # # merge constraints
-            new_node['constraints'] = copy.deepcopy(p['constraints'])
-            # for c in new_node['constraints']:
-            #     if c['agent'] == a1 or c['agent'] == a2:
-            #         c['agent'] = meta_agent
-            
+            # check if agents in collision are already part of a meta-agent solution found
+            for ma in q['meta_agents']:
+                if a1 in ma:
+                    group1 = ma
+                elif a2 in ma:
+                    group2 = ma
+                
+            new_constraints = None # to-do
 
             # # solve new group
             # paths for agents in meta-agent
+            temp_agents = copy.deepcopy(p['agents'])
+            meta_agent = None
+            # agent 1 then 2
             # group 1
             for a in group1:
-                a1_path = a_star(self.my_map,self.starts[a1], self.goals[a1], self.heuristics[a1], \
-                            a1,new_node['constraints'])
-            # group_2
-            for a in group2:
-                a2_path = a_star(self.my_map,self.starts[a2], self.goals[a2], self.heuristics[a2], \
-                            a2,new_node['constraints'])
+                path = a_star(self.my_map,self.starts[a1], self.goals[a1], self.heuristics[a1], \
+                            a1,new_constraints)
+                if path is None:
+                    print('solution doesn\'t exist')
+                    break # return None
+                temp_agents[a] = { 
+                    'path': path
+                }
+            else: # continue
+                # group_2
+                for a in group2:
+                    path = a_star(self.my_map,self.starts[a2], self.goals[a2], self.heuristics[a2], \
+                                a2,new_constraints)
+                    if path is None:
+                        print('solution doesn\'t exist')
+                        break # return None
+                    temp_agents[a] = { 
+                        'path': path
+                    }
+                else: # solution found
+                    meta_agent = set.union(group1, group2)         
 
-            # meta_agent path
-            ma_path = a_star(self.my_map,self.starts[meta_agent], self.goals[meta_agent], self.heuristics[meta_agent], \
-                            meta_agent,new_node['constraints'])
-
-            assert ma_path
             
+            if meta_agent is None:
+                temp_agents = copy.deepcopy(p['agents'])
+                # repeat above in reverse order # agent 2 then 1
+                pass
 
-            new_node['paths'][meta_agent] = ma_path
-            new_node['collisions'] = detect_collisions(new_node['paths'])
-            new_node['cost'] = get_sum_of_cost(new_node['paths'])
 
-            assert new_node
-            return new_node       
+            if meta_agent:
+                assert meta_agent not in q['meta_agents']
+
+                ## to-do constraints meta-agent constraints: group1 + group 2
+
+                q['agents'] = temp_agents
+                q['collisions'] = detect_collisions(q['agents'], q['meta_agents'])
+                q['cost'] = get_sum_of_cost(q['paths'])
+                q['meta_agents'].append(meta_agent)
+ 
+
+            print('agents {}, {} merged into agent {}'.format(a1, a2, meta_agent))
+
+
+            assert q
+            return q       
 
 
             
