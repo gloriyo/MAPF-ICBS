@@ -1,7 +1,9 @@
 import time as timer
 import heapq
 import random
-from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
+from single_agent_planner import compute_heuristics, a_star, get_location
+from multi_agent_planner import ma_star,get_sum_of_cost
+import math
 import math
 import copy
 
@@ -14,20 +16,6 @@ import copy
 '''
 
 def detect_collision(path1, path2, pos=None):
-    '''Return the first collision that occurs between two robot paths
-
-    Parameters
-    ----------
-    path1 : list
-        A list of tuples representing locations in the first agent's path
-    path2 : list
-        A list of tuples representing locations in the second agent's path
-
-    Returns
-    -------
-    list
-        a list of location(s) for the first vertex or edge collision
-    '''
     ##############################
     # Task 3.1: Return the first collision that occurs between two robot paths (or None if there is no collision)
     #           There are two types of collisions: vertex collision and edge collision.
@@ -55,7 +43,7 @@ def detect_collision(path1, path2, pos=None):
     return None
 
 
-def detect_collisions(paths, collisions=None):
+def detect_collisions(paths, ma_list, collisions=None):
     ##############################
     # Task 3.1: Return a list of first collisions between all robot pairs.
     #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
@@ -63,12 +51,23 @@ def detect_collisions(paths, collisions=None):
     #           You should use your detect_collision function to find a collision between two robots.
     if collisions is None:
         collisions = []
-    for i in range(len(paths)-1):
-        for j in range(i+1,len(paths)):
-            if detect_collision(paths[i],paths[j]) !=None:
-                position,t = detect_collision(paths[i],paths[j])
-                collisions.append({'a1':i,
-                                'a2':j,
+    for ai in range(len(paths)-1):
+        for aj in range(ai+1,len(paths)):
+            if detect_collision(paths[ai],paths[aj]) !=None:
+                position,t = detect_collision(paths[ai],paths[aj])
+
+                # find meta-agent group for each agent
+                ma_i = {ai}
+                ma_j = {aj}
+                # check if agents in collision are already in meta-agents 
+                for ma in ma_list:
+                    if ai in ma:
+                        ma_i = ma
+                    elif aj in ma:
+                        ma_j = ma
+
+                collisions.append({'a1':ai, 'ma1':ma_i,
+                                'a2':aj, 'ma2':ma_j,
                                 'loc':position,
                                 'timestep':t+1})
     return collisions
@@ -107,24 +106,29 @@ def standard_splitting(collision, constraints=None):
     if constraints is None:
         constraints = []
 
+
     if len(collision['loc'])==1:
         constraints.append({'agent':collision['a1'],
+                            'meta_agent': collision['ma1'],
                             'loc':collision['loc'],
                             'timestep':collision['timestep'],
                             'positive':False
                             })
         constraints.append({'agent':collision['a2'],
+                            'meta_agent': collision['ma2'],
                             'loc':collision['loc'],
                             'timestep':collision['timestep'],
                             'positive':False
                             })
     else:
         constraints.append({'agent':collision['a1'],
+                            'meta_agent': collision['ma1'],
                             'loc':[collision['loc'][0],collision['loc'][1]],
                             'timestep':collision['timestep'],
                             'positive':False
                             })
         constraints.append({'agent':collision['a2'],
+                            'meta_agent': collision['ma'],
                             'loc':[collision['loc'][1],collision['loc'][0]],
                             'timestep':collision['timestep'],
                             'positive':False
@@ -147,38 +151,42 @@ def disjoint_splitting(collision, constraints=None):
     if constraints is None:
         constraints = []
 
-    agent = random.randint(0,1)
-    a = 'a'+str(agent +1)
+    a = random.choice([('a1','ma1'), ('a2','ma2')]) # chosen agent
+    agent = a[0]
+    meta_agent = a[1]
+
     if len(collision['loc'])==1:
-        constraints.append({'agent':collision[a],
+        constraints.append({'agent':collision[agent],
+                            'meta_agent': collision[meta_agent],
                             'loc':collision['loc'],
                             'timestep':collision['timestep'],
                             'positive':True
                             })
-        constraints.append({'agent':collision[a],
+        constraints.append({'agent':collision[agent],
+                            'meta_agent': collision[meta_agent],
                             'loc':collision['loc'],
                             'timestep':collision['timestep'],
                             'positive':False
                             })
     else:
-        if agent == 0:
-            constraints.append({'agent':collision[a],
+        if a[0] == collision['a1']:
+            constraints.append({'agent':collision[agent],
                                 'loc':[collision['loc'][0],collision['loc'][1]],
                                 'timestep':collision['timestep'],
                                 'positive':True
                                 })
-            constraints.append({'agent':collision[a],
+            constraints.append({'agent':collision[agent],
                                 'loc':[collision['loc'][0],collision['loc'][1]],
                                 'timestep':collision['timestep'],
                                 'positive':False
                                 })
         else:
-            constraints.append({'agent':collision[a],
+            constraints.append({'agent':collision[agent],
                                 'loc':[collision['loc'][1],collision['loc'][0]],
                                 'timestep':collision['timestep'],
                                 'positive':True
                                 })
-            constraints.append({'agent':collision[a],
+            constraints.append({'agent':collision[agent],
                                 'loc':[collision['loc'][1],collision['loc'][0]],
                                 'timestep':collision['timestep'],
                                 'positive':False
@@ -207,7 +215,11 @@ def paths_violate_constraint(constraint, paths, rst=None):
 
 def combined_constraints(constraints, new_constraints, updated_constraints=None):
     assert updated_constraints is None
-    updated_constraints = copy.deepcopy(new_constraints)
+
+    if isinstance(new_constraints, list):
+        updated_constraints = copy.deepcopy(new_constraints)
+    else:
+        updated_constraints = [new_constraints]
 
     for c in constraints:
         if c not in updated_constraints:
@@ -224,9 +236,6 @@ def bypass_found(curr_cost, new_cost, curr_collisions_num, new_collisions_num):
         and (new_collisions_num < curr_collisions_num):
         return True
     return False
-
-
-
 
 
 class CBSSolver(object):
@@ -286,38 +295,26 @@ class CBSSolver(object):
         # paths         - list of paths, one for each agent
         #               [[(x11, y11), (x12, y12), ...], [(x21, y21), (x22, y22), ...], ...]
         # collisions     - list of collisions in paths
-        root = {'cost': 0,
-                'constraints': [],
-                # 'paths': [],
-                'agents': {},
-                'collisions': [],
-                'discarded_agents': []}
+        root = {
+            'cost':0,
+            'constraints': [],
+            'paths': {}, # {0: [..path...], ... , n: [..path...]} # not sure if other keys are needed
+            'collisions': [],
+            'simple_collisions':[], # matrix of collisions in history between pairs of (meta-)agents
+            'ma_list': [] # [{a1,a2}, ... ]
+        }       
+        
         for i in range(self.num_of_agents):  # Find initial path for each agent
-            path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
-                          i, root['constraints'])
+            path = ma_star(self.my_map, self.starts, self.goals, self.heuristics,
+                          [i], root['constraints'])
             if path is None:
                 raise BaseException('No solutions')
-            # root['paths'].append(path)
-
-            # thank you Gloria!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             
-            root['agents'][i] = {
-                'path': path[i],
-                'coupled_agents': [i]
-            }
-
+            root['paths'][i] = path
+        print (root ['paths'])
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
         self.push_node(root)
-
-        # # Task 3.1: Testing
-        # print(root['collisions'])
-
-        # # Task 3.2: Testing
-        # print('Root Collisions:')
-        # for collision in root['collisions']:
-        #     # print(standard_splitting(collision))
-        #     print(disjoint_splitting(collision))
 
 
         ##############################
@@ -345,18 +342,28 @@ class CBSSolver(object):
                 if c not in new_constraints:
                     new_constraints.append(c)
                         
-            a1 = collision['a1'] #agent a1
-            alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,new_constraints)
+            ma1 = collision['ma1'] #agent a1
+            # to-do: replace with coupled a* for ma-cbs
+            alt_path1 = ma_star(self.my_map,self.starts, self.goals,self.heuristics,ma1,new_constraints)
             print(alt_path1)
-            if not alt_path1 or len(alt_path1) > len(p['paths'][a1]):
+            bigger = False
+            for i in range(len(ma1)):
+                if len(alt_path1[i])> len(p['paths'][ma1[i]]):
+                    bigger =True
+            if not alt_path1 or bigger == True:
                 cardinality = 'semi-cardinal'
                 
                 print('alt_path1 takes longer or is empty. at least semi-cardinal.')
                 
-            a2 = collision['a2'] #agent a2
-            alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,new_constraints)
+            ma2 = collision['ma2'] #agent a2
+            # to-do: replace with coupled a* for ma-cbs
+            alt_path2 = ma_star(self.my_map,self.starts, self.goals,self.heuristics,ma2,new_constraints)
             print(alt_path2)
-            if not alt_path2 or len(alt_path2) > len(p['paths'][a2]):
+            bigger = False
+            for i in range(len(ma2)):
+                if len(alt_path1[i])> len(p['paths'][ma2[i]]):
+                    bigger =True
+            if not alt_path2 or bigger:
                 if cardinality == 'semi-cardinal':
                     cardinality = 'cardinal'
                     
@@ -367,110 +374,93 @@ class CBSSolver(object):
                     
                     print('alt_path2 takes longer or is empty. semi-cardinal.')   
                 
-            return cardinality
- 
+            return cardinality        
+
+
         def should_merge(collision, p, N=0):
-           
-            a1 = collision['a1']
-            a2 = collision['a2']
-    
-            if count_all_collisions_pair(p['paths'][a1], p['paths'][a2]) >= N:
+            # aSH
+            CM = 0
+            ma1 = collision['ma1']
+            ma2 = collision['ma2']
+            
+            for ai in ma1:
+                for aj in ma2:
+                    if ai > aj:
+                        ai, aj = aj, ai
+                    CM += p['simple_collisions'][ai][aj]
+            if CM > N:
                 return True
-                
             return False
 
-        # returns a new node with merged agents, based on collision at hand
+            
+        def generate_child(constraints, paths, group_collisions, ma_list):
+            collisions = detect_collisions(paths, ma_list)
+            cost = get_sum_of_cost(paths)
+            child_node = {
+                'cost':cost,
+                'constraints': copy.deepcopy(['constraints']),
+                'paths': copy.deepcopy(paths), # {0: {'path':[..path...]}, ... , n: {'path':[..path...]} # not sure if other keys are needed
+                'collisions': collisions,
+                'simple_collisions':copy.deepcopy(p['simple_collisions']), # matrix of collisions in history between pairs of simple agents
+                'ma_list': copy.deepcopy(p['ma_list']) # [{a1,a2}, ... ]
+            }
+            return child_node
+
+        # returns new merged agents (the meta-agent), and updated list of ma_list
         def merge_agents(self, collision, p):
 
             # constraints = standard_splitting(collision)
             
+            # collision simple agents and their meta-agent group
             a1 = collision['a1']
             a2 = collision['a2']
-
-            group1 = {a1}
-            group2 = {a2}
-
-            # child node with new meta agent # to-do move node init after 
-            q = {
-                'cost':0,
-                'constraints': copy.deepcopy(p['constraints']),
-                # 'paths':[],
-                'agents': copy.deepcopy(p['agents']), # {0: {'path':[..path...]}, ... , n: {'path':[..path...]} # not sure if other keys are needed
-                'collisions': None,
-                'group_collisions':copy.deepcopy(p['group_collisions']), # list of sets of numbers of collisions between (meta-)agents
-                'meta_agents': copy.deepcopy(p['meta_agents']) # [{a1,a2}, ... ]
-            }
-
-            # check if agents in collision are already part of a meta-agent solution found
-            for ma in q['meta_agents']:
-                if a1 in ma:
-                    group1 = ma
-                elif a2 in ma:
-                    group2 = ma
-                
-            new_constraints = None # to-do
-
-            # # solve new group
-            # paths for agents in meta-agent
-            temp_agents = copy.deepcopy(p['agents'])
-            meta_agent = None
-            # agent 1 then 2
-            # group 1
-            for a in group1:
-                path = a_star(self.my_map,self.starts[a1], self.goals[a1], self.heuristics[a1], \
-                            a1,new_constraints)
-                if path is None:
-                    print('solution doesn\'t exist')
-                    break # return None
-                temp_agents[a] = { 
-                    'path': path
-                }
-            else: # continue
-                # group_2
-                for a in group2:
-                    path = a_star(self.my_map,self.starts[a2], self.goals[a2], self.heuristics[a2], \
-                                a2,new_constraints)
-                    if path is None:
-                        print('solution doesn\'t exist')
-                        break # return None
-                    temp_agents[a] = { 
-                        'path': path
-                    }
-                else: # solution found
-                    meta_agent = set.union(group1, group2)         
-
-            
-            if meta_agent is None:
-                temp_agents = copy.deepcopy(p['agents'])
-                # repeat above in reverse order # agent 2 then 1
-                pass
+            ma1 = collision['ma1']
+            ma2 = collision['ma2']
 
 
-            if meta_agent:
-                assert meta_agent not in q['meta_agents']
+            # group1 = {a1}
+            # group2 = {a2}
 
-                ## to-do constraints meta-agent constraints: group1 + group 2
-
-                q['agents'] = temp_agents
-                q['collisions'] = detect_collisions(q['agents'], q['meta_agents'])
-                q['cost'] = get_sum_of_cost(q['paths'])
-                q['meta_agents'].append(meta_agent)
- 
-
-            print('agents {}, {} merged into agent {}'.format(a1, a2, meta_agent))
+            # new_constraints = copy.deepcopy(p['constraints'])
 
 
-            assert q
-            return q       
+            ###### REPLACE ###########
+            # # check if agents in collision are already part of a meta-agent solution found
+            # for ma in p['ma_list']:
+            #     if a1 in ma:
+            #         group1 = ma
+            #         # we will merge two groups so we do not want to detect this old meta-agent in the future again, same as group2
+            #         p['ma_list'].remove(ma)
+            #     elif a2 in ma:
+            #         group2 = ma
+            #         p['ma_list'].remove(ma)
+
+            meta_agent = set.union(ma1, ma2)
+
+            # # remove existing internal constraints
+            # for i, constraint in enumerate(new_constraints):
+            #     if ma1 == constraint['meta_agent'] and ma2 == constraint['meta_agent']:
+            #         new_constraints.remove 
+
+            # replace old meta-agents with merged meta-agent
+            for constraint in new_constraints:
+                if ma1 == constraint['meta_agent'] or ma2 == constraint['meta_agent']:
+                    constraint['meta_agent'] = meta_agent
 
 
-            
+
+            ma_list = copy.deepcopy(['ma_list'])
+            ma_list.append(meta_agent)
+
+            return meta_agent, ma_list
+
+        # ATTENTION: THE CBS LOOOOOOOOOOOOP ============@#￥#%#@￥@#%##@￥======  STARTS ---#￥%------   HERE  ---- @
         # normal CBS with disjoint and standard splitting
         while len(self.open_list) > 0:
             if self.num_of_generated > 50000:
                 print('reached maximum number of nodes. Returning...')
-                return None
-            print('\n')
+                return None #what are u guys doing here  Admiring the 50000 nodes?
+            print('\n')  
             p = self.pop_node()
             if p['collisions'] == []:
                 self.print_results(p)
@@ -492,86 +482,79 @@ class CBSSolver(object):
             new_constraints = None
             collision_type = None
             for collision in p['collisions']:
-                consts = None
-                consts = splitter(collision)
-
-                print(consts)
-                assert len(consts) == 2
-
-                cardinality = detect_cardinal_conflict(self, p, collision)
-
-                # cardinality = detect_cardinality(self, disjoint, p, collision, consts) # method b: costs
-                collision_cardinalities.append([cardinality, consts]) # change to dictionary...
-                if cardinality == 'cardinal' and new_constraints is None:    
+                collision_type = detect_cardinal_conflict(self, p, collision)
+                if collision_type == 'cardinal' and new_constraints is None:    
                     print('Detected cardinal collision. Chose it.')
                     print(collision)
-                    assert collision
 
                     chosen_collision = collision
-                    collision_type = 'cardinal'
-                    new_constraints = consts
+                    # collision_type = 'cardinal'
                     break
 
             if not new_constraints:
                 assert new_constraints is None
                 
                 for collision in p['collisions']:
-                    # consts = splitter(collision) ## NO....
-
-                    assert len(consts) == 2
-                    cardinality = collision_cardinalities[p['collisions'].index(collision)][0]
-                    consts = collision_cardinalities[p['collisions'].index(collision)][1]
-                    assert len(consts) == 2
-                    if cardinality == 'semi-cardinal':    
+                    collision_type = detect_cardinal_conflict(self, p, collision)
+                    if collision_type == 'semi-cardinal':    
                         
                         print('Detected semi-cardinal collision. Chose it.')
                         print(collision)
                         
                         chosen_collision = collision
-                        collision_type = 'semi-cardinal'
-                        new_constraints = consts
+                        # collision_type = 'semi-cardinal'
                         break
                 if not new_constraints:
                     assert new_constraints is None    
                     chosen_collision = p['collisions'][0] 
                     assert chosen_collision is not None
                     collision_type = 'non-cardinal'
-                    cardinality = 'non-cardinal'
-
-
-                    # new_constraints = splitter(chosen_collision)
-                    new_constraints = collision_cardinalities[0][1]
                     print('No cardinal or semi-cardinal conflict. Randomly choosing...')
+
+
+            # keep track of collisions in history (aSh)
+            chosen_a1 = chosen_collision['a1']
+            chosen_a2 = chosen_collision['a2']
+            if chosen_a1 > chosen_a2:
+                # swap to only fill half of the matrix
+                chosen_a1, chosen_a2 = chosen_a2, chosen_a1
+            p['simple_collisions'][chosen_a1][chosen_a2] += 1
+
 
             # implementing bypassing conflicts
             # if collision_type != 'cardinal' and find_bypass(self,p, chosen_collision, collision_type):
             #         continue
-            assert new_constraints is not None
+
             print('NEW CONSTS:')
-            print(new_constraints)
+            new_constraints = splitter(chosen_collision)
 
             # child_nodes = None
             child_nodes = []
             assert child_nodes == []
             bypass_successful = False
             for constraint in new_constraints:
-                q = {'cost':0,
-                    'constraints': [constraint],
-                    'paths':[],
-                    'collisions':[],
-                    'discarded_agents': []
-                }
-                for c in p['constraints']:
-                    if c not in q['constraints']:
-                        q['constraints'].append(c)
-                for pa in p['paths']:
-                    q['paths'].append(pa)
+                # q = {'cost':0,
+                #     'constraints': [constraint],
+                #     'paths':[],
+                #     'collisions':[],
+                #     'discarded_agents': []
+                # }
+                # for c in p['constraints']:
+                #     if c not in q['constraints']:
+                #         q['constraints'].append(c)
+                # for pa in p['paths']:
+                #     q['paths'].append(pa)
                 
-                for da in p['discarded_agents']:
-                    q['discarded_agents'].append(da)
+                # for da in p['discarded_agents']:
+                #     q['discarded_agents'].append(da)
                 
-                ai = constraint['agent']
-                path = a_star(self.my_map,self.starts[ai], self.goals[ai],self.heuristics[ai],ai,q['constraints'])
+                updated_constraints = updated_constraints(p['constraints'], constraint)
+                q = generate_child(updated_constraints, p['paths'], p['simple_collisions'], p['ma_list'])
+
+                ai = constraint['meta_agent']
+
+                # to-do: replace with coupled a* for ma-cbs
+                path = ma_star(self.my_map,self.starts, self.goals,self.heuristics,[ai],q['constraints']) 
                 
                 if path is not None:
                     q['paths'][ai]= path
@@ -580,7 +563,7 @@ class CBSSolver(object):
                     if constraint['positive']:
                         vol = paths_violate_constraint(constraint,q['paths'])
                         for v in vol:
-                            path_v = a_star(self.my_map,self.starts[v], self.goals[v],self.heuristics[v],v,q['constraints'])
+                            path_v = ma_star(self.my_map,self.starts, self.goals,self.heuristics,[v],q['constraints'])
                             if path_v  is None:
                                 continue_flag = True
                             else:
@@ -595,14 +578,14 @@ class CBSSolver(object):
                     #         and (len(q['collisions']) < len(p['collisions'])):
 
                     # if bypass is found, push only the current child and exit loop
-                    cardinalities_index = p['collisions'].index(chosen_collision)
-                    current_cardinality = collision_cardinalities[cardinalities_index][0]
+
 
                     # assert that bypass is not possible if cardinal
-                    if current_cardinality == 'cardinal':
+                    if collision_type == 'cardinal':
                         assert bypass_found(p['cost'], q['cost'], len(p['collisions']), len(q['collisions'])) == False
 
-                    if current_cardinality != 'cardinal' \
+                    # conflict should be resolved due to new constraints; compare costs and total number of collisions
+                    if collision_type != 'cardinal' \
                             and bypass_found(p['cost'], q['cost'], len(p['collisions']), len(q['collisions'])):
                         print('bypass found')
                         self.push_node(q)
@@ -610,26 +593,41 @@ class CBSSolver(object):
                         bypass_successful = True
                         break # break out of constraint loop
                     child_nodes.append(copy.deepcopy(q))
+            else: # bypass found
+                continue # start of while loop
 
-            # if bypass has not been found
-            if not bypass_successful:
+            assert not bypass_successful
 
-                # MA-CBS
-                print('asdfasdfasdfasdf                              ',should_merge(collision,p))
-                if should_merge(collision,p):
-                    q_with_new_agent = merge_agents(self, collision, p)
-                    
+            # MA-CBS
+            if should_merge(collision,p):
+                # returns meta_agent, ma_list
+                meta_agent, updated_ma_list = merge_agents(self, collision, p)
+
+                # Update paths
+                meta_agent_paths = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent),p['constraints'])
+
+                # if can be 
+                if meta_agent_paths:
+                    assert meta_agent not in p['ma_list']
+
+                    # Update collisions, cost
+                    updated_node = generate_child(p['constraints'],  meta_agent_paths, p['simple_collisions'], updated_ma_list) 
+
+
+                    # print('agents {}, {} merged into agent {}'.format(collision['a1'], a2, meta_agent))
+
                     # Merge & restart
                     # if merge_restart():
                         # restart_search()
-                    self.push_node(q_with_new_agent)    
-                    continue
+                    self.push_node(updated_node)    
+
+                    continue # start of while loop
 
                 
-                assert len(child_nodes) <= 2
-                print('bypass not found')
-                for n in child_nodes:
-                    self.push_node(n)     
+            assert len(child_nodes) <= 2
+            print('bypass not found')
+            for n in child_nodes:
+                self.push_node(n)     
                     
         return None
 
