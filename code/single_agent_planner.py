@@ -7,7 +7,9 @@ def move(loc, dir):
 
 def get_sum_of_cost(agents):
     rst = 0
+    ('agentprints                                                         ', agents)
     for agent in agents:
+        print('path',agent['path'])
         rst += len(agent['path']) - 1
     return rst
 

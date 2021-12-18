@@ -501,7 +501,7 @@ class CBSSolver(object):
             if p['ma_collisions'] == []:
                 self.print_results(p)
                 for pa in p['paths']:
-                    print(pa)
+                    print('asfasdfasdf       ',pa)
                 return p['paths'], self.num_of_generated, self.num_of_expanded # number of nodes generated/expanded for comparing implementations
 
 
@@ -591,9 +591,10 @@ class CBSSolver(object):
 
                 # to-do: replace with coupled a* for ma-cbs
                 path = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(ai),q['constraints']) 
-                
+                print('paaaaaaaaaaaath         ',path,'                 ',ai)
                 if path is not None:
-                    q['paths'][ai]= path
+                    for agent in ai:
+                        q['paths'][agent]= path
                     # task 4
                     continue_flag = False
                     if constraint['positive']:
@@ -607,7 +608,7 @@ class CBSSolver(object):
                         if continue_flag:
                             continue
                     
-                    q['ma_collisions'] = detect_collisions(q['paths'])
+                    q['ma_collisions'] = detect_collisions(q['paths'],q['ma_list'])
                     q['cost'] = get_sum_of_cost(q['paths'])
                     # CHECK BYPASS HERE.......
                     #     if q['cost'] == p['cost'] \
