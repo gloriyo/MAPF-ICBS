@@ -600,11 +600,17 @@ class CBSSolver(object):
                     if constraint['positive']:
                         vol = paths_violate_constraint(constraint,q['paths'])
                         for v in vol:
+                            if type(v) == int:
+                                v = {v}
                             path_v = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(v),q['constraints'])
-                            if path_v  is None:
-                                continue_flag = True
+                            
+                            for i in range(len(v)):
+                                if path_v[i]  is None:
+                                    continue_flag = True
                             else:
-                                q['paths'][v] = path_v
+                                for i in range(len(v)):
+                                    q['paths'][list(v)[i]] = path_v[i]
+                                print('asdfasfasdf        ',q['paths'])
                         if continue_flag:
                             continue
                     
