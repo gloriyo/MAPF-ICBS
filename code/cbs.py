@@ -429,16 +429,16 @@ class CBSSolver(object):
             return False
 
             
-        def generate_child(constraints, paths, group_collisions, ma_list):
+        def generate_child(constraints, paths, agent_collisions, ma_list):
             collisions = detect_collisions(paths, ma_list)
             cost = get_sum_of_cost(paths)
             child_node = {
                 'cost':cost,
-                'constraints': copy.deepcopy(['constraints']),
+                'constraints': copy.deepcopy(constraints),
                 'paths': copy.deepcopy(paths), # {0: {'path':[..path...]}, ... , n: {'path':[..path...]} # not sure if other keys are needed
                 'ma_collisions': collisions,
-                'agent_collisions':copy.deepcopy(p['agent_collisions']), # matrix of collisions in history between pairs of simple agents
-                'ma_list': copy.deepcopy(p['ma_list']) # [{a1,a2}, ... ]
+                'agent_collisions':copy.deepcopy(agent_collisions), # matrix of collisions in history between pairs of simple agents
+                'ma_list': copy.deepcopy(ma_list) # [{a1,a2}, ... ]
             }
             return child_node
 
