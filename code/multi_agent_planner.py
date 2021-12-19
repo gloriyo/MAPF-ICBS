@@ -1,5 +1,6 @@
 import heapq
 from itertools import product
+import numpy
 
 def move(loc, dir):
     directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
@@ -9,7 +10,7 @@ def move(loc, dir):
 def get_sum_of_cost(paths):
     rst = 0
     for path in paths:
-        print(path)
+        # print(path)
         rst += len(path) - 1
     return rst
 
@@ -107,8 +108,11 @@ def get_path(goal_node,meta_agent):
         curr = curr['parent']
     for i in range(len(meta_agent)):
         path[i].reverse()
-    if len(path) ==1:
-        path = path[0]
+        assert path[i] is not None
+    # if len(path) ==1:
+    #     path = path[0]
+
+    assert path is not None
     return path
 
 
@@ -160,6 +164,9 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
     # Task 1.1: Extend the A* search to search in the space-time domain
     #           rather than space domain, only.
     
+    # This is so I know which part is not CBS when debugging CBS with A*
+    print("\nSTARTING A*\n") # comment out if needed
+
     open_list = []
     closed_list = dict()
     earliest_goal_timestep = 0
@@ -167,7 +174,10 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
     table = None
     start_loc = []
    
+
+    print('# of agents', len(meta_agent))
     for agent in meta_agent:
+        print('build agent {}\'s table:' )
         new_table = build_constraint_table(constraints, agent)
         if table ==None:
             table = new_table
@@ -197,6 +207,9 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
         for i in range(len(meta_agent)):
             if curr['loc'][i] == goal_loc[meta_agent[i]] or curr['loc'][i] == goal_loc[0]:
                 print(get_path(curr,meta_agent))
+
+                print("\nEND OF A*\n") # comment out if needed
+
                 return get_path(curr,meta_agent)
         # # Task 1.4: Adjust the goal test condition to handle goal constraints
         
@@ -268,6 +281,8 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                 closed_list[(tuple(child['loc']),child['timestep'])] = child
                 push_node(open_list, child)   
     print('no solution')
+
+    print("\nEND OF A*\n") # comment out if needed
     return None
 
 

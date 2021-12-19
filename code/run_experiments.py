@@ -97,7 +97,18 @@ if __name__ == '__main__':
         if args.solver == "CBS":
             print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, goals)
-            paths, nodes_gen, nodes_exp = cbs.find_solution(args.disjoint)
+            solution = cbs.find_solution(args.disjoint)
+
+            print("AEGRRR")
+
+            if solution is not None:
+                print(solution)
+                paths, nodes_gen, nodes_exp = [solution[i] for i in range(3)]
+                if paths is None:
+                    raise BaseException('No solutions')  
+            else:
+                raise BaseException('No solutions')
+
         elif args.solver == "Independent":
             print("***Run Independent***")
             solver = IndependentSolver(my_map, starts, goals)
