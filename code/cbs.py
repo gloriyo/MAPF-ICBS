@@ -33,9 +33,11 @@ def detect_collision(path1, path2, pos=None):
         loc_c2 = get_location(path2,t)
         loc1 = get_location(path1,t+1)
         loc2 = get_location(path2,t+1)
+        # vertex collision
         if loc1 == loc2:
             pos.append(loc1)
             return pos,t
+        # edge collision
         if[loc_c1,loc1] ==[loc2,loc_c2]:
             pos.append(loc2)
             pos.append(loc_c2)
@@ -137,7 +139,7 @@ def standard_splitting(collision, constraints=None):
                             'positive':False
                             })
         constraints.append({'agent':collision['a2'],
-                            'meta_agent': collision['ma'],
+                            'meta_agent': collision['ma2'],
                             'loc':[collision['loc'][1],collision['loc'][0]],
                             'timestep':collision['timestep'],
                             'positive':False
@@ -406,8 +408,9 @@ class CBSSolver(object):
             #     if c not in temp_constraints:
             #         temp_constraints.append(c)
 
-                        
-            assert len(temp_constraints) > len(p['constraints']) # do not change original
+            combined_constraints(p['constraints'], temp_constraints)                        
+            # assert len(temp_constraints) > len(p['constraints']) # do not change original
+
 
             ma1 = collision['ma1'] #agent a1
 
@@ -558,8 +561,8 @@ class CBSSolver(object):
             p = self.pop_node()
             if p['ma_collisions'] == []:
                 self.print_results(p)
-                for pa in p['paths']:
-                    print('asfasdfasdf       ',pa)
+                # for pa in p['paths']:
+                #     # print('asfasdfasdf       ',pa)
                 return p['paths'], self.num_of_generated, self.num_of_expanded # number of nodes generated/expanded for comparing implementations
 
 

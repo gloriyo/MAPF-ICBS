@@ -177,7 +177,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
     print('# of agents', len(meta_agent))
     for agent in meta_agent:
-        print('build agent {}\'s table:'.format(agent))
+        print('build agent {}\'s table:' )
         new_table = build_constraint_table(constraints, agent)
         if table ==None:
             table = new_table
@@ -205,7 +205,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
         curr = pop_node(open_list)
         #############################
         for i in range(len(meta_agent)):
-            # if curr['loc'][i] == goal_loc[meta_agent[i]] or curr['loc'][i] == goal_loc[0]:
+            if curr['loc'][i] == goal_loc[meta_agent[i]] or curr['loc'][i] == goal_loc[0]:
             if curr['loc'][i] != goal_loc[meta_agent[i]]:
                 break
         else: # all agents reached goal_locations
@@ -229,39 +229,11 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
         #         if no_future_goalConstraint:
         #             return get_path(curr,meta_agent)
 
-
-        # all combinations of directions for each agent in meta_agent for next timestep
         meta_node = product(list(range(5)),repeat =len(meta_agent))
-
         for node in meta_node:
-            # child_loc = [move(curr['loc'][i], node[i]) for i in range(len(meta_agent))]
-
-            child_loc = []
-            # print('node: ', node)
-            # print('new child_loc')
-
+            child_loc = [move(curr['loc'][i], node[i]) for i in range(len(meta_agent))]
 
             continue_flag = False
-
-            # check for conflicts with current paths
-
-            # vertex collision; check for duplicates in child_loc
-            for i in range(len(meta_agent)):
-                iloc = move(curr['loc'][i], node[i])
-                if iloc in child_loc:
-                    continue_flag = True
-                child_loc.append(move(curr['loc'][i], node[i]))
-
-            for i in range(len(meta_agent)):
-                # edge collision: check for matching locs in curr_loc and child_loc between two agents
-                for j in range(len(meta_agent)):
-                    if i != j:
-                        # print(i, j)
-                        if child_loc[i] == curr['loc'][j] and child_loc[j] == curr['loc'][i]:
-                            continue_flag = True             
-
-            # vertex collision; check for duplicates in child_loc
-            
             for i in range(len(child_loc)):
                 # print(curr['loc'][i], '   ',child_loc[i],'    ',curr['timestep']+1)
                 loc= child_loc[i]
@@ -275,17 +247,10 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                 if is_constrained(curr['loc'][i],loc,curr['timestep']+1,table)==0:
                     continue_flag = True
                     break
-
-
-
-                # if[loc_c1,loc1] ==[loc2,loc_c2]:
-                #     pos.append(loc2)
-                #     pos.append(loc_c2)
-                #     return pos,t
             if continue_flag:
                 continue
             
-            # print('agent',agent, '       ' ,child_loc)
+            print('agent',agent, '       ' ,child_loc)
             h_value = 0
             for i in range(len(meta_agent)):
                 h_value += h_values[meta_agent[i]][child_loc[i]]

@@ -99,8 +99,6 @@ if __name__ == '__main__':
             cbs = CBSSolver(my_map, starts, goals)
             solution = cbs.find_solution(args.disjoint)
 
-            print("AEGRRR")
-
             if solution is not None:
                 print(solution)
                 paths, nodes_gen, nodes_exp = [solution[i] for i in range(3)]
