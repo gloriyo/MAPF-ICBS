@@ -51,6 +51,7 @@ def detect_collisions(paths, ma_list, collisions=None):
     #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
     #           causing the collision, and the timestep at which the collision occurred.
     #           You should use your detect_collision function to find a collision between two robots.
+
     if collisions is None:
         collisions = []
     for ai in range(len(paths)-1):
@@ -67,13 +68,17 @@ def detect_collisions(paths, ma_list, collisions=None):
                 #         ma_i = ma
                 #     elif aj in ma:
                 #         ma_j = ma
+                assert isinstance(ma_list , list)
                 ma_i = get_ma_of_agent(ai, ma_list)
+                assert isinstance(ma_list , list)
                 ma_j = get_ma_of_agent(aj, ma_list)
 
-                collisions.append({'a1':ai, 'ma1':ma_i,
-                                'a2':aj, 'ma2':ma_j,
-                                'loc':position,
-                                'timestep':t+1})
+                # check if internal collision in the same meta-agent
+                if ma_i != ma_j:
+                    collisions.append({'a1':ai, 'ma1':ma_i,
+                                    'a2':aj, 'ma2':ma_j,
+                                    'loc':position,
+                                    'timestep':t+1})
     return collisions
 
 def count_all_collisions_pair(path1, path2):
@@ -200,8 +205,12 @@ def disjoint_splitting(collision, constraints=None):
 # get the meta-agent an agent is a part of
 # do NOT use for constraints, use key 'meta-agent' in constraint
 def get_ma_of_agent(agent, ma_list):
+
+    assert isinstance(ma_list , list)
     for ma in ma_list:
+        # print(ma, ma_list)
         if agent in ma:
+            # print(agent, ma)
             return ma
     raise BaseException('No meta-agent found for agent')
                         
@@ -354,7 +363,6 @@ class CBSSolver(object):
             root['ma_list'].append({i})
             root['paths'].extend(path)
 
-        # print (root ['paths'])
 
 
         root['cost'] = get_sum_of_cost(root['paths'])
@@ -477,18 +485,23 @@ class CBSSolver(object):
             ma1 = collision['ma1']
             ma2 = collision['ma2']
             
+            # check it is same meta-agent
+
             for ai in ma1:
                 for aj in ma2:
                     if ai > aj:
                         ai, aj = aj, ai
                     CM += p['agent_collisions'][ai][aj]
             if CM > N:
-                print('> Merge meta-agents meta-agents {}, {}'.format(ma1, ma2))
+                print('> Merge meta-agents {}, {} into one meta-agent'.format(ma1, ma2))
                 return True
             return False
 
             
         def generate_child(constraints, paths, agent_collisions, ma_list):
+
+            assert isinstance(ma_list , list)
+
             collisions = detect_collisions(paths, ma_list)
             cost = get_sum_of_cost(paths)
             child_node = {
@@ -502,7 +515,7 @@ class CBSSolver(object):
             return child_node
 
         # returns new merged agents (the meta-agent), and updated list of ma_list
-        def merge_agents(self, collision, p):
+        def merge_agents(self, collision, ma_list):
 
             # constraints = standard_splitting(collision)
             
@@ -532,6 +545,8 @@ class CBSSolver(object):
 
             meta_agent = set.union(ma1, ma2)
 
+            print('new merged meta_agent ', meta_agent)
+
             # # remove existing internal constraints
             # for i, constraint in enumerate(new_constraints):
             #     if ma1 == constraint['meta_agent'] and ma2 == constraint['meta_agent']:
@@ -541,10 +556,12 @@ class CBSSolver(object):
             for constraint in new_constraints:
                 if ma1 == constraint['meta_agent'] or ma2 == constraint['meta_agent']:
                     constraint['meta_agent'] = meta_agent
+                print('updated meta-constraint: ', constraint)
 
+            assert meta_agent not in ma_list
 
-
-            ma_list = copy.deepcopy(['ma_list'])
+            ma_list.remove(ma1)
+            ma_list.remove(ma2)
             ma_list.append(meta_agent)
 
             return meta_agent, ma_list
@@ -646,6 +663,10 @@ class CBSSolver(object):
                 updated_constraints = combined_constraints(p['constraints'], constraint)
                 q = generate_child(updated_constraints, p['paths'], p['agent_collisions'], p['ma_list'])
 
+
+                assert isinstance(p['ma_list'] , list)
+                assert isinstance(q['ma_list'] , list)
+
                 ma = constraint['meta_agent']
 
                 print('Sending meta_agent {} of constrained agent {} to A* '.format(ma, constraint['agent']))
@@ -723,7 +744,7 @@ class CBSSolver(object):
             if should_merge(collision,p):
                 print('> Merge meta-agents into a new')
                 # returns meta_agent, ma_list
-                meta_agent, updated_ma_list = merge_agents(self, collision, p)
+                meta_agent, updated_ma_list = merge_agents(self, collision, p['ma_list'])
 
                 print('Sending newly merged meta_agent {} to A* '.format(meta_agent))
 
@@ -732,7 +753,7 @@ class CBSSolver(object):
 
                 # if can be 
                 if meta_agent_paths:
-                    assert meta_agent not in p['ma_list']
+                    
 
                     # Update collisions, cost
                     updated_node = generate_child(p['constraints'],  meta_agent_paths, p['agent_collisions'], updated_ma_list) 
