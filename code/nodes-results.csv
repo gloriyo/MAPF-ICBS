@@ -11,7 +11,7 @@ instances/test_13.txt
 instances/test_14.txt
 2,2
 instances/test_15.txt
-6,4
+4,3
 instances/test_16.txt
 2,2
 instances/test_17.txt
@@ -29,7 +29,7 @@ instances/test_21.txt
 instances/test_22.txt
 4,3
 instances/test_23.txt
-3,2
+4,3
 instances/test_24.txt
 2,2
 instances/test_25.txt
@@ -59,7 +59,7 @@ instances/test_35.txt
 instances/test_36.txt
 2,2
 instances/test_37.txt
-4,3
+3,2
 instances/test_38.txt
 1,1
 instances/test_39.txt
