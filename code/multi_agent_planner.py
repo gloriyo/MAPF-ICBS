@@ -58,7 +58,7 @@ def build_constraint_table(constraints, agent):
     #               is_constrained function.
     table =dict()
     for constraint in constraints:
-        print(constraints,'     ',agent)
+        # print(constraints,'     ',agent)
         if constraint['agent'] == agent:
             if constraint['timestep'] not in table:
                 table[constraint['timestep']] = [constraint]
@@ -179,6 +179,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
     for agent in meta_agent:
         print('build agent {}\'s table:'.format(agent))
         new_table = build_constraint_table(constraints, agent)
+        print(new_table)
         if table ==None:
             table = new_table
         else:

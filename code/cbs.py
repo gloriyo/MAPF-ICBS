@@ -423,6 +423,11 @@ class CBSSolver(object):
             # get current paths of meta-agent
             curr_paths = []
             for a1 in ma1:
+
+                not_nested_list = p['paths'][a1]
+                assert any(isinstance(i, list) for i in not_nested_list) == False
+
+
                 curr_paths.append(p['paths'][a1])
                 
 
@@ -462,6 +467,14 @@ class CBSSolver(object):
             # if not alt_path2 or bigger:
             curr_paths = []
             for a2 in ma2:
+
+
+
+                
+                not_nested_list = p['paths'][a2]
+                assert any(isinstance(i, list) for i in not_nested_list) == False
+
+
                 curr_paths.append(p['paths'][a2])
                 
             print(curr_paths)
@@ -658,10 +671,17 @@ class CBSSolver(object):
                 print('\twith constraints ', q['constraints'])
                 path = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(ma),q['constraints']) 
 
-                # print('paaaaaaaaaaaath         ',path,'                 ',ai)
                 if path is not None:
-                    for agent in ma:
-                        q['paths'][agent]= path
+                    for i, agent in enumerate(ma):
+
+                        not_nested_list = path[i]
+                        assert any(isinstance(j, list) for j in not_nested_list) == False
+
+
+                        q['paths'][agent] = path[i]
+
+
+
                     # task 4
                     # continue_flag = False
                     if constraint['positive']:
@@ -681,6 +701,11 @@ class CBSSolver(object):
                                 for i, agent in enumerate(v_ma_list):
 
                                     assert path_v_ma[i] is not None
+                                    print(path_v_ma[i])
+
+                                    not_nested_list = path_v_ma[i]
+                                    assert any(isinstance(j, list) for j in not_nested_list) == False
+
 
                                     q['paths'][agent] = path_v_ma[i]
                             else:
@@ -741,10 +766,22 @@ class CBSSolver(object):
 
                 # if can be 
                 if meta_agent_paths:
-                    
+                                        
+                    updated_paths = copy.deepcopy(p['paths'])
+
+                    for i, agent in enumerate(meta_agent):
+                        
+                        assert isinstance(i, int)
+
+                        not_nested_list = meta_agent_paths[i]
+                        assert any(isinstance(j, list) for j in not_nested_list) == False
+
+
+
+                        updated_paths[agent] = meta_agent_paths[i]
 
                     # Update collisions, cost
-                    updated_node = generate_child(p['constraints'],  meta_agent_paths, p['agent_collisions'], updated_ma_list) 
+                    updated_node = generate_child(p['constraints'], updated_paths, p['agent_collisions'], updated_ma_list) 
 
 
                     # print('agents {}, {} merged into agent {}'.format(collision['a1'], a2, meta_agent))
