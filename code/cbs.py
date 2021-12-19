@@ -180,22 +180,26 @@ def disjoint_splitting(collision, constraints=None):
     else:
         if a[0] == collision['a1']:
             constraints.append({'agent':collision[agent],
+                                'meta_agent': collision[meta_agent],
                                 'loc':[collision['loc'][0],collision['loc'][1]],
                                 'timestep':collision['timestep'],
                                 'positive':True
                                 })
             constraints.append({'agent':collision[agent],
+                                'meta_agent': collision[meta_agent],
                                 'loc':[collision['loc'][0],collision['loc'][1]],
                                 'timestep':collision['timestep'],
                                 'positive':False
                                 })
         else:
             constraints.append({'agent':collision[agent],
+                                'meta_agent': collision[meta_agent],
                                 'loc':[collision['loc'][1],collision['loc'][0]],
                                 'timestep':collision['timestep'],
                                 'positive':True
                                 })
             constraints.append({'agent':collision[agent],
+                                'meta_agent': collision[meta_agent],
                                 'loc':[collision['loc'][1],collision['loc'][0]],
                                 'timestep':collision['timestep'],
                                 'positive':False
