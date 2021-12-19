@@ -240,9 +240,9 @@ class CBSSolver(object):
             cardinality = 'non-cardinal'
 
             q = copy.deepcopy(p)
-            # new_constraints = standard_splitting(collision)
+            new_constraints = standard_splitting(collision)
 
-            new_constraints = disjoint_splitting(collision)
+            # new_constraints = disjoint_splitting(collision)
 
             # for c in p['constraints']:
             #     if c not in new_constraints:
@@ -261,16 +261,6 @@ class CBSSolver(object):
          
             alt_path1 = a_star(self.my_map,self.starts[a1], self.goals[a1],self.heuristics[a1],a1,alt_constraint1)
             q['paths'][a1] = alt_path1
-            
-            if new_constraints[0]['positive']:
-                vol = paths_violate_constraint(new_constraints[0],q['paths'])
-                for v in vol:
-                    path_v = a_star(self.my_map,self.starts[v], self.goals[v],self.heuristics[v],v,alt_constraint1)
-                    if path_v  is None:
-                        alt_path1 = None
-                        break
-                    else:
-                        q['paths'][v] = path_v
             q['cost'] = get_sum_of_cost(q['paths'])
 
 
