@@ -226,20 +226,27 @@ def meta_agents_violate_constraint(constraint, paths, ma_list, violating_ma=None
         violating_ma = []
 
     for i in range(len(paths)):
-        if i == constraint['agent']:
+        # if i == constraint['agent']:
+        #     continue
+
+        ma_i = get_ma_of_agent(i, ma_list)
+
+        if ma_i == constraint['meta_agent']:
             continue
+
+
         curr = get_location(paths[i], constraint['timestep'])
         prev = get_location(paths[i], constraint['timestep'] - 1)
         if len(constraint['loc']) == 1:  # vertex constraint
             if constraint['loc'][0] == curr:
-                ma_i = get_ma_of_agent(i, ma_list)
-                if ma_i not in violating_ma:
+                # ma_i = get_ma_of_agent(i, ma_list)
+                # if ma_i not in violating_ma:
                     violating_ma.append(ma_i)
         else:  # edge constraint
             if constraint['loc'][0] == prev or constraint['loc'][1] == curr \
                     or constraint['loc'] == [curr, prev]:
-                ma_i = get_ma_of_agent(i, ma_list)
-                if ma_i not in violating_ma:
+                # ma_i = get_ma_of_agent(i, ma_list)
+                # if ma_i not in violating_ma:
                     violating_ma.append(ma_i)
     return violating_ma
 
@@ -529,38 +536,9 @@ class CBSSolver(object):
             ma1 = collision['ma1']
             ma2 = collision['ma2']
 
-
-            # group1 = {a1}
-            # group2 = {a2}
-
-            # new_constraints = copy.deepcopy(p['constraints'])
-
-
-            ###### REPLACE ###########
-            # # check if agents in collision are already part of a meta-agent solution found
-            # for ma in p['ma_list']:
-            #     if a1 in ma:
-            #         group1 = ma
-            #         # we will merge two groups so we do not want to detect this old meta-agent in the future again, same as group2
-            #         p['ma_list'].remove(ma)
-            #     elif a2 in ma:
-            #         group2 = ma
-            #         p['ma_list'].remove(ma)
-
             meta_agent = set.union(ma1, ma2)
 
             print('new merged meta_agent ', meta_agent)
-
-            # # remove existing internal constraints
-            # for i, constraint in enumerate(new_constraints):
-            #     if ma1 == constraint['meta_agent'] and ma2 == constraint['meta_agent']:
-            #         new_constraints.remove 
-
-            # replace old meta-agents with merged meta-agent
-            for constraint in new_constraints:
-                if ma1 == constraint['meta_agent'] or ma2 == constraint['meta_agent']:
-                    constraint['meta_agent'] = meta_agent
-                print('updated meta-constraint: ', constraint)
 
             assert meta_agent not in ma_list
 
@@ -673,7 +651,8 @@ class CBSSolver(object):
 
                 ma = constraint['meta_agent']
 
-                print('Sending meta_agent {} of constrained agent {} to A* '.format(ma, constraint['agent']))
+                print('\nSending meta_agent {} of constrained agent {} to A* '.format(ma, constraint['agent']))
+                print('\twith constraints ', q['constraints'])
                 path = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(ma),q['constraints']) 
 
                 # print('paaaaaaaaaaaath         ',path,'                 ',ai)
@@ -689,7 +668,8 @@ class CBSSolver(object):
                             # if type(v_ma) == int:
                             #     v_ma = {v_ma}
                             
-                            print('Sending meta-agent violating constraint {} to A* '.format(v_ma))
+                            print('\nSending meta-agent violating constraint {} to A* '.format(v_ma))
+                            print('\twith constraints ', q['constraints'])
                             v_ma_list = list(v_ma) # should use same list for all uses
                             path_v_ma = ma_star(self.my_map,self.starts,self.goals,self.heuristics,v_ma_list,q['constraints'])
                             
@@ -751,6 +731,7 @@ class CBSSolver(object):
                 meta_agent, updated_ma_list = merge_agents(self, collision, p['ma_list'])
 
                 print('Sending newly merged meta_agent {} to A* '.format(meta_agent))
+                print('\twith constraints ', p['constraints'])
 
                 # Update paths
                 meta_agent_paths = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent),p['constraints'])
