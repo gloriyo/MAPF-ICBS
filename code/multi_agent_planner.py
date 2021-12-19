@@ -60,7 +60,7 @@ def build_constraint_table(constraints, agent):
     for constraint in constraints:
         # print(constraints,'     ',agent)
         if constraint['agent'] == agent:
-            if constraint['timestep'] not in table:
+            if constraint['timestep'] not in table: 
                 table[constraint['timestep']] = [constraint]
             else:
                 table[constraint['timestep']].append(constraint)
@@ -116,25 +116,26 @@ def get_path(goal_node,meta_agent):
     return path
 
 
-def is_constrained(curr_loc, next_loc, next_time, constraint_table):
+def is_constrained(curr_loc, next_loc, next_time, constraint_table, agent):
     ##############################
     # Task 1.2/1.3: Check if a move from curr_loc to next_loc at time step next_time violates
     #               any given constraint. For efficiency the constraints are indexed in a constraint_table
     #               by time step, see build_constraint_table.
     if next_time in constraint_table:  
         for constraint in constraint_table[next_time]:
-            if len(constraint['loc']) ==1:
-                if constraint['loc'] == [next_loc]:
-                    if constraint['positive']==True:
-                        return 1
-                    else:
-                        return 0
-            else:
-                if constraint['loc'] ==[curr_loc,next_loc]:
-                    if constraint['positive']==True:
-                        return 1
-                    else:
-                        return 0
+            if agent == constraint['agent']:
+                if len(constraint['loc']) ==1:
+                    if constraint['loc'] == [next_loc]:
+                        if constraint['positive']==True:
+                            return 1
+                        else:
+                            return 0
+                else:
+                    if constraint['loc'] ==[curr_loc,next_loc]:
+                        if constraint['positive']==True:
+                            return 1
+                        else:
+                            return 0
     return -1   
     pass
 
@@ -273,7 +274,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                     continue_flag = True
                     break
                 # print('is constrainted   ',is_constrained(curr['loc'][i],loc,curr['timestep']+1,table))
-                if is_constrained(curr['loc'][i],loc,curr['timestep']+1,table)==0:
+                if is_constrained(curr['loc'][i],loc,curr['timestep']+1,table, meta_agent[i])==0:
                     continue_flag = True
                     break
 

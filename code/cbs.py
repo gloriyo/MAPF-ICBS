@@ -166,6 +166,8 @@ def disjoint_splitting(collision, constraints=None):
     agent = a[0]
     meta_agent = a[1]
 
+    print(agent, collision)
+
     if len(collision['loc'])==1:
         constraints.append({'agent':collision[agent],
                             'meta_agent': collision[meta_agent],
@@ -180,7 +182,7 @@ def disjoint_splitting(collision, constraints=None):
                             'positive':False
                             })
     else:
-        if a[0] == collision['a1']:
+        if agent == 'a1':
             constraints.append({'agent':collision[agent],
                                 'meta_agent': collision[meta_agent],
                                 'loc':[collision['loc'][0],collision['loc'][1]],
@@ -724,6 +726,15 @@ class CBSSolver(object):
                         #     continue
                     
                     q['ma_collisions'] = detect_collisions(q['paths'],q['ma_list'])
+
+
+                    if chosen_collision in q['ma_collisions']:
+                        print(q['paths'])
+                        print('\nOH NO!!!!! chosen_collision is still in child :\'(')
+                        print(chosen_collision)
+
+                    assert chosen_collision not in q['ma_collisions']
+
                     q['cost'] = get_sum_of_cost(q['paths'])
 
                     # CHECK BYPASS HERE.......
@@ -747,6 +758,7 @@ class CBSSolver(object):
                         break # break out of constraint loop
                     assert not bypass_successful
                     child_nodes.append(copy.deepcopy(q))
+
             if bypass_successful:
                 continue # start of while loop
 
