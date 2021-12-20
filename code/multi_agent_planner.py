@@ -396,7 +396,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
 
             child = {'loc': child_loc,
-                    'g_val': curr['g_val']+s_ma_length,
+                    'g_val': curr['g_val']+1,
                     'h_val': h_value,
                     'parent': curr,
                     'timestep':curr['timestep']+1,
