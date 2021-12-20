@@ -111,10 +111,7 @@ def get_path(goal_node,meta_agent):
             # remove trailing duplicates
             while path[i][-1] == path[i][-2]:
                 path[i].remove(path[i][-1])
-
-
- 
-        assert path[i][-1] != path[i][-2] # no repeats at the end!!
+            assert path[i][-1] != path[i][-2] # no repeats at the end!!
 
     assert path is not None
     return path
