@@ -2,7 +2,13 @@
 import argparse
 import glob
 from pathlib import Path
-from cbs import CBSSolver
+from basic_cbs import CBSSolver # original cbs with standard/disjoint splitting
+
+# cbs with different improvements
+from icbs_cardinal_bypass import ICBS_CB_Solver # only cardinal dectection and bypass
+from icbs_complete import ICBS_Solver # all improvements including MA-CBS
+
+
 from independent import IndependentSolver
 from prioritized import PrioritizedPlanningSolver
 from visualize import Animation
@@ -106,6 +112,33 @@ if __name__ == '__main__':
                     raise BaseException('No solutions')  
             else:
                 raise BaseException('No solutions')
+
+        elif args.solver == "ICBS_CB":
+            print("***Run CBS***")
+            cbs = ICBS_CB_Solver(my_map, starts, goals)
+            solution = cbs.find_solution(args.disjoint)
+
+            if solution is not None:
+                # print(solution)
+                paths, nodes_gen, nodes_exp = [solution[i] for i in range(3)]
+                if paths is None:
+                    raise BaseException('No solutions')  
+            else:
+                raise BaseException('No solutions')
+
+        elif args.solver == "ICBS":
+            print("***Run CBS***")
+            cbs = ICBS_Solver(my_map, starts, goals)
+            solution = cbs.find_solution(args.disjoint)
+
+            if solution is not None:
+                # print(solution)
+                paths, nodes_gen, nodes_exp = [solution[i] for i in range(3)]
+                if paths is None:
+                    raise BaseException('No solutions')  
+            else:
+                raise BaseException('No solutions')
+
 
         elif args.solver == "Independent":
             print("***Run Independent***")
