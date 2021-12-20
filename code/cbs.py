@@ -291,7 +291,7 @@ def combined_constraints(constraints, new_constraints, updated_constraints=None)
     for c in constraints:
         if c not in updated_constraints:
             updated_constraints.append(c)
-    print(new_constraints)
+    # print(new_constraints)
 
     assert len(updated_constraints) <= len(constraints) + len(new_constraints)
     return updated_constraints
@@ -637,16 +637,19 @@ class CBSSolver(object):
 
             new_constraints = splitter(chosen_collision)
 
-        
+            print('OLD CONSTS:')
+            print(p['constraints'])      
+
             print('NEW CONSTS:')
             print(new_constraints)
-
+            print('\n')
             # child_nodes = None
             child_nodes = []
             assert child_nodes == []
             bypass_successful = False
             for constraint in new_constraints:
                 print(constraint)
+
                 # q = {'cost':0,
                 #     'constraints': [constraint],
                 #     'paths':[],

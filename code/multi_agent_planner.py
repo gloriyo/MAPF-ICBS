@@ -300,11 +300,17 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
         seeking_ma = copy.deepcopy(meta_agent)
         # remove agent that has reached its goal from ma
+
+
+        num_a_path_complete = 0
         for i, a in enumerate(meta_agent):
             if curr['reached_goal'][i] == True:
                 seeking_ma.remove(a)
+                num_a_path_complete += 1
 
         s_ma_length = len(seeking_ma)
+
+        assert len(seeking_ma) == ma_length - num_a_path_complete
 
         # create a list of lists of each possible directions for remaining agents
         for a in range(s_ma_length):
@@ -424,7 +430,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
 
             child = {'loc': child_loc,
-                    'g_val': curr['g_val']+1,
+                    'g_val': curr['g_val']+s_ma_length, # number of new locs (cost) added
                     'h_val': h_value,
                     'parent': curr,
                     'timestep':curr['timestep']+1,
