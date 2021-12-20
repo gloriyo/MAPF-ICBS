@@ -181,12 +181,12 @@ class CBSSolver(object):
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        print("Generate node {}".format(self.num_of_generated))
+        # print("Generate node {}".format(self.num_of_generated))
         self.num_of_generated += 1
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        print("Expand node {}".format(id))
+        # print("Expand node {}".format(id))
         self.num_of_expanded += 1
         return node
 
@@ -268,20 +268,20 @@ class CBSSolver(object):
                 cardinality = 'semi-cardinal'
             # if not alt_path1 or len(alt_path1)>len(p['paths'][a1]):
             #     cardinality = 'semi-cardinal'    
-                print('alt_path1 takes longer or is empty. at least semi-cardinal.')
-                
+                # print('alt_path1 takes longer or is empty. at least semi-cardinal.')
+                # 
             a2 = collision['a2'] #agent a2
             alt_path2 = a_star(self.my_map,self.starts[a2], self.goals[a2],self.heuristics[a2],a2,alt_constraint2)
             if not alt_path2 or len(alt_path2) > len(p['paths'][a2]):
                 if cardinality == 'semi-cardinal':
                     cardinality = 'cardinal'
                     
-                    print('identified cardinal conflict')
+                    # print('identified cardinal conflict')
   
                 else:
                     cardinality = 'semi-cardinal'
                     
-                    print('alt_path2 takes longer or is empty. semi-cardinal.')   
+                    # print('alt_path2 takes longer or is empty. semi-cardinal.')   
                 
             return cardinality   
 
@@ -290,7 +290,7 @@ class CBSSolver(object):
         while len(self.open_list) > 0:
             p = self.pop_node()
             if p['collisions'] == []:
-                # self.print_results(p)
+                self.print_results(p)
                 return p['paths']
 
             chosen_collision = None

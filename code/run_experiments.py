@@ -66,6 +66,7 @@ def import_mapf_instance(filename):
         starts.append((sx, sy))
         goals.append((gx, gy))
     f.close()
+    print(starts)
     return my_map, starts, goals
 
 
