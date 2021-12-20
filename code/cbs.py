@@ -342,6 +342,8 @@ class CBSSolver(object):
         self.num_of_expanded += 1
         return node
 
+    def empty_tree(self):
+        self.open_list.clear()
 
     def find_solution(self, disjoint):
         """ Finds paths for all agents from their start locations to their goal locations
@@ -813,6 +815,12 @@ class CBSSolver(object):
                     # Merge & restart
                     # if merge_restart():
                         # restart_search()
+
+                    # restart with only updated node with merged agents
+                    self.empty_tree()
+
+                    assert self.open_list == []
+
                     self.push_node(updated_node)    
 
                     continue # start of while loop
