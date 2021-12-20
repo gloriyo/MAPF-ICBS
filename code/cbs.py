@@ -235,7 +235,7 @@ def meta_agents_violate_constraint(constraint, paths, ma_list, violating_ma=None
 
         ma_i = get_ma_of_agent(i, ma_list)
 
-        if ma_i == constraint['meta_agent']:
+        if ma_i == constraint['meta_agent'] or ma_i in violating_ma:
             continue
 
 
@@ -252,6 +252,7 @@ def meta_agents_violate_constraint(constraint, paths, ma_list, violating_ma=None
                 # ma_i = get_ma_of_agent(i, ma_list)
                 # if ma_i not in violating_ma:
                     violating_ma.append(ma_i)
+
     return violating_ma
 
 
@@ -331,13 +332,13 @@ class CBSSolver(object):
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['ma_collisions']), self.num_of_generated, node))
-        print("> Generate node {}".format(self.num_of_generated))
+        print("> Generate node {} with cost {}".format(self.num_of_generated, node['cost']))
         self.num_of_generated += 1
         
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        print("> Expand node {}".format(id))
+        print("> Expand node {} with cost {}".format(id, node['cost']))
         self.num_of_expanded += 1
         return node
 
@@ -408,7 +409,7 @@ class CBSSolver(object):
 
             ma1 = collision['ma1'] #agent a1
 
-            print('Sending ma1 in collision {} to A* '.format(ma1))
+            # print('Sending ma1 in collision {} to A* '.format(ma1))
 
             assert temp_constraints[0]['meta_agent'] == ma1
             path1_constraints = combined_constraints(p['constraints'], temp_constraints[0])
@@ -425,8 +426,8 @@ class CBSSolver(object):
                 curr_paths.append(p['paths'][a1])
                 
 
-            print(curr_paths)
-            print(alt_paths1)
+            # print(curr_paths)
+            # print(alt_paths1)
 
             # get costs for the meta agent
             curr_cost = get_sum_of_cost(curr_paths)
@@ -435,7 +436,7 @@ class CBSSolver(object):
             if alt_paths1:
                 alt_cost = get_sum_of_cost(alt_paths1)
 
-            print('\t oldcost:{} newcost:{}'.format(curr_cost, alt_cost))
+            # print('\t oldcost:{} newcost:{}'.format(curr_cost, alt_cost))
 
             if not alt_paths1 or alt_cost > curr_cost:
                 cardinality = 'semi-cardinal'
@@ -446,7 +447,7 @@ class CBSSolver(object):
             ma2 = collision['ma2'] #agent a2
 
 
-            print('Sending ma2 in collision {} to A* '.format(ma2))
+            # print('Sending ma2 in collision {} to A* '.format(ma2))
 
 
             assert temp_constraints[1]['meta_agent'] == ma2
@@ -472,8 +473,8 @@ class CBSSolver(object):
 
                 curr_paths.append(p['paths'][a2])
                 
-            print(curr_paths)
-            print(alt_paths2)
+            # print(curr_paths)
+            # print(alt_paths2)
 
 
             # get costs for the meta agent
@@ -483,20 +484,20 @@ class CBSSolver(object):
             if alt_paths2:
                 alt_cost = get_sum_of_cost(alt_paths2)
 
-            print('\t oldcost:{} newcost:{}'.format(curr_cost, alt_cost))
+            # print('\t oldcost:{} newcost:{}'.format(curr_cost, alt_cost))
 
             if not alt_paths2 or alt_cost > curr_cost:
                 # cardinality = 'semi-cardinal'
                 if cardinality == 'semi-cardinal':
                     cardinality = 'cardinal'
                     
-                    print('identified cardinal conflict')
+                    # print('identified cardinal conflict')
 
                 else:
                     cardinality = 'semi-cardinal'
                     
-                    print('alt_path2 takes longer or is empty. semi-cardinal.')   
-            print('cardinality: ', cardinality)
+                    # print('alt_path2 takes longer or is empty. semi-cardinal.')   
+            # print('cardinality: ', cardinality)
                 
             return cardinality        
 
@@ -775,7 +776,7 @@ class CBSSolver(object):
                 print('Sending newly merged meta_agent {} to A* '.format(meta_agent))
                 print('\twith constraints ', p['constraints'])
 
-                for a in ma:
+                for a in meta_agent:
                     print (q['paths'][a])
 
 
@@ -832,3 +833,8 @@ class CBSSolver(object):
 
         print("Expanded nodes:  {}".format(self.num_of_expanded))
         print("Generated nodes: {}".format(self.num_of_generated))
+
+
+        print("Solution:")
+        for i in range(len(node['paths'])):
+            print("agent", i, ": ", node['paths'][i])

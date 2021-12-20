@@ -104,20 +104,25 @@ def get_path(goal_node,meta_agent):
     for i in range(len(meta_agent)):
         path[i].reverse()
         assert path[i] is not None
-    # if len(path) ==1:
-    #     path = path[0]
+
+        while path[i][-1] == path[i][-2]:
+            path[i].remove(path[i][-1])
+
+
+        # print(path[i])
+        assert path[i][-1] != path[i][-2] # no repeats at the end!!
 
     assert path is not None
     return path
 
-# returns whether if a move at timestep violates any external constraint
+# returns whether if a move at timestep violates any external (negative) constraint
 def is_constrained(curr_loc, next_loc, timestep, constraint_table, agent):
 
     if timestep not in constraint_table:
         return False
     
     for constraint in constraint_table[timestep]:
-        if agent == constraint['agent']:
+        if agent == constraint['agent'] and constraint['positive'] == False:
             # vertex constraint
             if len(constraint['loc']) == 1:
                 if next_loc == constraint['loc'][0]:
@@ -135,17 +140,27 @@ def future_constraint_exists(agent, agent_loc, timestep, constraint_table):
         # if t is a future timestep which exists in constraint table
         if t > timestep:
             # all constraints for timestep t in table 
-            print("future constraints at timestep ", t)
+            # print("future constraints at timestep {}", t)
 
 
             for constraint in constraint_table[t]:
-                print(constraint)
+                # print(constraint)
                 # last loc in vertex/edge constraint
                 if constraint['loc'][-1] == agent_loc:
                     # assert agent != constraint['agent'] # idk if this should happen/what to do if this happens... nvm oh im dumb
                     if(agent == constraint['agent'] and constraint['positive']):
                         continue
-                    return True
+                    if(agent != constraint['agent'] and not constraint['positive']):
+                        assert constraint['positive'] == False
+                        continue
+
+                    #  both sets of ifs above and below should do the same thing
+
+                    if(agent == constraint['agent'] and not constraint['positive']):
+                        return True
+                    if(agent != constraint['agent'] and constraint['positive']):
+                        assert constraint['positive'] == False
+                        return True
                 
     return False
 
@@ -210,9 +225,17 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
     while len(open_list) > 0:
         curr = pop_node(open_list)
 
-        print('pop node w/ f val: ', curr['g_val'] + curr['h_val'])
+        # print('pop node w/ f val: ', curr['g_val'] + curr['h_val'])
 
-
+        # check if any agent is at their goal loc (shouldn't move in child loc)
+        for a in range(ma_length):
+            if curr['loc'][a] == goal_loc[meta_agent[a]]:
+                # check if there are any future (external) constraints
+                future_constraint_found = future_constraint_exists(a, curr['loc'][a], curr['timestep'], table)
+                if future_constraint_found:
+                    print("future constraint found!!")
+                else:
+                    curr['reached_goal'][a] = True
 
         # check if all agents have reached their goal states
         for i in range(len(meta_agent)):
@@ -233,16 +256,35 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
             else: # all agents do not violate future constraints
                 print('Returning path....')
-                print(get_path(curr,meta_agent), '\n')
+                # print(get_path(curr,meta_agent), '\n')
                 
+
+                # ALSO AGENTS WITH POSITIVE CONSTRAINTS SHOULD ABIDE BY THEM
+
                 return get_path(curr,meta_agent)
 
-        # all combinations of directions for each agent in meta_agent for next timestep
-        ma_dirs = product(list(range(5)),repeat =len(meta_agent))
+        ma_dirs_list = []
 
+        # create a list of lists of each possible directions for each agent 
+        for a in range(ma_length):
+            if curr['reached_goal'][a] == True:
+                ma_dirs_list.append([4]) # do NOT move agent
+            # elif : # idk how to deal with this yet... check curr loc to see if
+            #     is_pos_constrained(curr['timestep']+1,table, meta_agent[a])
+            else:
+                ma_dirs_list.append(list(range(5)))
+
+
+        # all combinations of directions for each agent in meta_agent for next timestep
+        # ma_dirs = product(list(range(5)),repeat =len(meta_agent))
+        ma_dirs = product(*ma_dirs_list) # create "nested loop with available moves"
+
+        # how to fil
 
         # each 'dirs' contains 1 possible direction for each agent 
         for dirs in ma_dirs:
+                        
+
 
             child_loc = []
 
@@ -284,13 +326,18 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                 if my_map[loc[0]][loc[1]]:
                     invalid_move = True
                     break
-                # agent is externally constrained
+                # agent is constrained by a negative external constraint
                 if is_constrained(curr['loc'][i],loc,curr['timestep']+1,table, meta_agent[i]):
                     invalid_move = True
                     break
+                # agent does not abide by positive constraint
 
             if invalid_move:
                 continue
+
+
+
+
 
             # find h_values for current moves
             h_value = 0
@@ -304,12 +351,15 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
             # edit 2: h_value is 'ma_length' times single agent h_value.... adjust g_value accordingly? 
 
 
+
             child = {'loc': child_loc,
                     'g_val': curr['g_val']+ma_length,
                     'h_val': h_value,
                     'parent': curr,
-                    'timestep':curr['timestep']+1
+                    'timestep':curr['timestep']+1,
+                    'reached_goal': [False for i in range(len(meta_agent))] # currently checked when node is popped
                     }
+            
 
             if (tuple(child['loc']),child['timestep']) in closed_list:
                 existing_node = closed_list[(tuple(child['loc']),child['timestep'])]

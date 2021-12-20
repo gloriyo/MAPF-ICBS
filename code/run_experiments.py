@@ -100,7 +100,7 @@ if __name__ == '__main__':
             solution = cbs.find_solution(args.disjoint)
 
             if solution is not None:
-                print(solution)
+                # print(solution)
                 paths, nodes_gen, nodes_exp = [solution[i] for i in range(3)]
                 if paths is None:
                     raise BaseException('No solutions')  
