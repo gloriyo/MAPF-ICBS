@@ -208,8 +208,8 @@ class CBSSolver(object):
                 'paths': [],
                 'collisions': []}
         for i in range(self.num_of_agents):  # Find initial path for each agent
-            path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],i, root['constraints'])
-            # path = ma_star(self.my_map, self.starts, self.goals, self.heuristics,[i], root['constraints'])
+            path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
+                          i, root['constraints'])
             if path is None:
                 raise BaseException('No solutions')
             root['paths'].append(path)
@@ -217,6 +217,7 @@ class CBSSolver(object):
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
         self.push_node(root)
+
 
 
 
@@ -230,15 +231,10 @@ class CBSSolver(object):
         #           Ensure to create a copy of any objects that your child nodes might inherit
         
         while len(self.open_list) > 0:
-            # if self.num_of_generated > 50000:
-            #     print('reached maximum number of nodes. Returning...')
-            #     return None
             p = self.pop_node()
             if p['collisions'] == []:
                 self.print_results(p)
-                for pa in p['paths']:
-                    print(pa)
-                return p['paths'], self.num_of_generated, self.num_of_expanded # number of nodes generated/expanded for comparing implementations
+                return p['paths']
             collision = p['collisions'].pop(0)
             # constraints = standard_splitting(collision)
             constraints = disjoint_splitting(collision)
@@ -256,7 +252,7 @@ class CBSSolver(object):
                 
                 ai = constraint['agent']
                 path = a_star(self.my_map,self.starts[ai], self.goals[ai],self.heuristics[ai],ai,q['constraints'])
-
+                
                 if path is not None:
                     q['paths'][ai]= path
                     # task 4
@@ -286,7 +282,7 @@ class CBSSolver(object):
         print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
         print("Expanded nodes:  {}".format(self.num_of_expanded))
         print("Generated nodes: {}".format(self.num_of_generated))
-
+        
         print("Solution:")
         for i in range(len(node['paths'])):
             print("agent", i, ": ", node['paths'][i])
