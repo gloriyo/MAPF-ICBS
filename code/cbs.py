@@ -578,6 +578,8 @@ class CBSSolver(object):
 
 
             print('Node expanded. Collisions: ', p['ma_collisions'])
+            for pa in p['paths']:
+                print(pa)
 
             print('\n> Find Collision Type')
 
@@ -589,6 +591,9 @@ class CBSSolver(object):
             new_constraints = None
             collision_type = None
             for collision in p['ma_collisions']:
+
+                print(collision)
+
                 collision_type = detect_cardinal_conflict(self, p, collision)
                 if collision_type == 'cardinal' and new_constraints is None:    
                     print('Detected cardinal collision. Chose it.')
@@ -641,6 +646,7 @@ class CBSSolver(object):
             assert child_nodes == []
             bypass_successful = False
             for constraint in new_constraints:
+                print(constraint)
                 # q = {'cost':0,
                 #     'constraints': [constraint],
                 #     'paths':[],
@@ -694,6 +700,7 @@ class CBSSolver(object):
                     if constraint['positive']:
                         # vol = paths_violate_constraint(constraint,q['paths'])
                         violating_ma_list = meta_agents_violate_constraint(constraint, q['paths'], q['ma_list'])
+                        no_solution = False
                         for v_ma in violating_ma_list:
                             # if type(v_ma) == int:
                             #     v_ma = {v_ma}
@@ -721,9 +728,10 @@ class CBSSolver(object):
 
                                     q['paths'][agent] = path_v_ma[i]
                             else:
-                                continue # move on the next constraint
-                                   
-
+                                print("no solution, moving on to next constraint")   
+                                no_solution = True
+                                break # move on the next constraint
+                                
                             # for i in range(len(v_ma)):
                             #     if path_v_ma[i] is None:
                             #         continue_flag = True
@@ -732,9 +740,12 @@ class CBSSolver(object):
                             #     for i in range(len(v_ma)): 
                             #         q['paths'][list(v_ma)[i]] = path_v_ma[i]
                                 # print('asdfasfasdf        ',q['paths'])
+                        if no_solution:
+                            continue # move on to the next constraint
+
                         # if continue_flag:
                         #     continue
-                    
+                    print("no solution? should not be here...")  
                     q['ma_collisions'] = detect_collisions(q['paths'],q['ma_list'])
 
 

@@ -138,7 +138,7 @@ def is_constrained(curr_loc, next_loc, timestep, constraint_table, agent):
     return False
 
 # returns whether agent violates its positive constraint
-def violates_pos_constraint(curr_loc, next_loc, timestep, constraint_table, agent):
+def violates_pos_constraint(curr_loc, next_loc, timestep, constraint_table, agent, meta_agent):
     if timestep not in constraint_table:
         return False
     for constraint in constraint_table[timestep]:
@@ -146,10 +146,12 @@ def violates_pos_constraint(curr_loc, next_loc, timestep, constraint_table, agen
             # vertex constraint
             if len(constraint['loc']) == 1:
                 if next_loc != constraint['loc'][0]:
+                    print('agent {} must follow positive constraint at timestep {}: {}'.format(agent, timestep, constraint['loc']))
                     return True
             # edge constraint
             else:
                 if constraint['loc'] != [curr_loc, next_loc]:
+                    print('agent {} must follow positive constraint at timestep {}: {}'.format(agent, timestep, constraint['loc']))
                     return True
     return False
     
@@ -398,8 +400,8 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                     invalid_move = True
                     break
                 # agent has a positive constraint and doesn't meet its positive constraint
-                if violates_pos_constraint(curr['loc'][i],loc,curr['timestep']+1,table, meta_agent[i]):
-                    print('agent {} must follow positive constraint'.format(meta_agent[i]))
+                if violates_pos_constraint(curr['loc'][i],loc,curr['timestep']+1,table, meta_agent[i], meta_agent):
+                    print("currently at timestep {} with child loc {}".format(curr['timestep'], loc))
                     invalid_move = True
                     break
 
