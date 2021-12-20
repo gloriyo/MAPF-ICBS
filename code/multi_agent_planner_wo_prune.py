@@ -274,79 +274,59 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
         ma_dirs_list = []
 
-        seeking_ma = copy.deepcopy(meta_agent)
-        # remove agent that has reached its goal from ma
-        for i, a in enumerate(meta_agent):
-            if curr['reached_goal'][i] == True:
-                seeking_ma.remove(a)
-
-        s_ma_length = len(seeking_ma)
-
-        # create a list of lists of each possible directions for remaining agents
-        for a in range(s_ma_length):
-            ma_dirs_list.append(list(range(5)))
-
-        # # create a list of lists of each possible directions for each agent 
+        # seeking_ma = meta_agent
+        # # remove agent that has reached its goal from ma
         # for a in range(ma_length):
         #     if curr['reached_goal'][a] == True:
-        #         ma_dirs_list.append([4]) # do NOT move agent
-        #         # print('agent {} has reached goal: {} at t {}; do not move'.format(meta_agent[a], curr['loc'][a], curr['timestep']))
-        #     # elif : # idk how to deal with this yet... check curr loc to see if
-        #     #     is_pos_constrained(curr['timestep']+1,table, meta_agent[a])
-        #     else:
-        #         ma_dirs_list.append(list(range(5)))
+        #         seeking_ma.remove(a)
 
+        # s_ma_length = len(seeking_ma)
+
+        # # create a list of lists of each possible directions for remaining agents
+        # for a in range(len(s_ma_length)):
+        #     ma_dirs_list.append(list(range(5)))
+
+        # create a list of lists of each possible directions for each agent 
+        for a in range(ma_length):
+            if curr['reached_goal'][a] == True:
+                ma_dirs_list.append([4]) # do NOT move agent
+                # print('agent {} has reached goal: {} at t {}; do not move'.format(meta_agent[a], curr['loc'][a], curr['timestep']))
+            # elif : # idk how to deal with this yet... check curr loc to see if
+            #     is_pos_constrained(curr['timestep']+1,table, meta_agent[a])
+            else:
+                ma_dirs_list.append(list(range(5)))
+
+        assert len(ma_dirs_list) == ma_length
         # all combinations of directions for each agent in meta_agent for next timestep
         # ma_dirs = product(list(range(5)),repeat =len(meta_agent))
         ma_dirs = product(*ma_dirs_list) # create "nested loop with available moves"
 
        
 
-        # each 'dirs' contains 1 possible direction for each remaining agent 
+        # each 'dirs' contains 1 possible direction for each agent 
         for dirs in ma_dirs:
-
-            print('dirs: ', dirs)
-
-            invalid_move = False
-            child_loc = copy.deepcopy(curr['loc'])
-            # move each agent for new timestep & check for (internal) conflicts with each other
             for a in range(ma_length):           
                 if curr['reached_goal'][a] == True:
+                    # ma_dirs_list.append([4]) # do NOT move agent
+                    print('agent {} has reached goal: {} at t {}; do not move'.format(meta_agent[a], curr['loc'][a], curr['timestep']))
+                    assert dirs[a] == 4
 
-                    
+            child_loc = []
 
-                    # print('agent {} has reached goal: {} at t {}; do not move'.format(meta_agent[a], curr['loc'][a], curr['timestep']))
 
-                    agent = meta_agent[a]
-                    assert agent not in seeking_ma
+            invalid_move = False
 
-                    continue
-                else:
-                    agent = meta_agent[a]
-                    i_dir = seeking_ma.index(agent) # index in directions list
-                    assert i_dir >= 0
-                    aloc = move(curr['loc'][a], dirs[i_dir])
-                    # vertex collision; check for duplicates in child_loc
-                    if aloc in child_loc:
-                        invalid_move = True
-                        break
-                    child_loc[a] = move(curr['loc'][a], dirs[i_dir])   
-
+            # move each agent for new timestep & check for (internal) conflicts with each other
+            for a in range(ma_length):
+                aloc = move(curr['loc'][a], dirs[a])
+                # vertex collision; check for duplicates in child_loc
+                if aloc in child_loc:
+                    invalid_move = True
+                    break
+                child_loc.append(move(curr['loc'][a], dirs[a]))
 
             if invalid_move:
                 continue
-
-            # # move each agent for new timestep & check for (internal) conflicts with each other
-            # for a in range(s_ma_length):
-            #     aloc = move(curr['loc'][a], dirs[a])
-            #     # vertex collision; check for duplicates in child_loc
-            #     if aloc in child_loc:
-            #         invalid_move = True
-            #         break
-            #     child_loc.append(move(curr['loc'][a], dirs[a]))
-
-            # if invalid_move:
-            #     continue
 
 
             for ai in range(ma_length):
@@ -382,6 +362,8 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
 
 
+
+
             # find h_values for current moves
             h_value = 0
             for i in range(ma_length):
@@ -391,12 +373,12 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
             # find g_values for currunt moves
             g_value = curr['g_val'] # i'm not too sure if g_val should be increased conditionally
             # edit: I don't think it should because new node is new node (new branch in A*) even if some agents have reached their goals
-            # edit 2: h_value is 's_ma_length' times single agent h_value.... adjust g_value accordingly? 
+            # edit 2: h_value is 'ma_length' times single agent h_value.... adjust g_value accordingly? 
 
 
 
             child = {'loc': child_loc,
-                    'g_val': curr['g_val']+s_ma_length,
+                    'g_val': curr['g_val']+ma_length,
                     'h_val': h_value,
                     'parent': curr,
                     'timestep':curr['timestep']+1,
