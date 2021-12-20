@@ -105,11 +105,15 @@ def get_path(goal_node,meta_agent):
         path[i].reverse()
         assert path[i] is not None
 
-        while path[i][-1] == path[i][-2]:
-            path[i].remove(path[i][-1])
+        print(path[i])
+
+        if len(path[i]) > 1: 
+            # remove trailing duplicates
+            while path[i][-1] == path[i][-2]:
+                path[i].remove(path[i][-1])
 
 
-        # print(path[i])
+ 
         assert path[i][-1] != path[i][-2] # no repeats at the end!!
 
     assert path is not None
@@ -135,7 +139,7 @@ def is_constrained(curr_loc, next_loc, timestep, constraint_table, agent):
     return False
 
 # future external constraints
-def future_constraint_exists(agent, agent_loc, timestep, constraint_table):
+def future_constraint_exists(agent, meta_agent, agent_loc, timestep, constraint_table):
     for t in constraint_table:
         # if t is a future timestep which exists in constraint table
         if t > timestep:
@@ -146,20 +150,25 @@ def future_constraint_exists(agent, agent_loc, timestep, constraint_table):
             for constraint in constraint_table[t]:
                 # print(constraint)
                 # last loc in vertex/edge constraint
+
                 if constraint['loc'][-1] == agent_loc:
                     # assert agent != constraint['agent'] # idk if this should happen/what to do if this happens... nvm oh im dumb
-                    if(agent == constraint['agent'] and constraint['positive']):
-                        continue
-                    if(agent != constraint['agent'] and not constraint['positive']):
-                        assert constraint['positive'] == False
-                        continue
+                    # if(agent == constraint['agent'] and constraint['positive']):
+                    #     continue
+                    # if(agent != constraint['agent'] and not constraint['positive']):
+                    #     assert constraint['positive'] == False
+                    #     continue
 
                     #  both sets of ifs above and below should do the same thing
+
+                    if agent == 2:
+                        print('current timestep: {}, const timestep: {}'.format(timestep, constraint['timestep']))
+                        print('agent 2 loc: ', agent_loc)
+                        print('constraint loc:', constraint['loc'][-1])
 
                     if(agent == constraint['agent'] and not constraint['positive']):
                         return True
                     if(agent != constraint['agent'] and constraint['positive']):
-                        assert constraint['positive'] == False
                         return True
                 
     return False
@@ -229,9 +238,12 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
         # check if any agent is at their goal loc (shouldn't move in child loc)
         for a in range(ma_length):
+
+            # print('\'agent\': {}, \'timestep\': {}'.format(a, curr['timestep']))
+
             if curr['loc'][a] == goal_loc[meta_agent[a]]:
                 # check if there are any future (external) constraints
-                future_constraint_found = future_constraint_exists(a, curr['loc'][a], curr['timestep'], table)
+                future_constraint_found = future_constraint_exists(meta_agent[a],meta_agent, curr['loc'][a], curr['timestep'], table)
                 if future_constraint_found:
                     print("future constraint found!!")
                 else:
@@ -249,7 +261,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                 # if current agent has reached its goal
                 assert curr['loc'][i] == goal_loc[meta_agent[i]]
                 # check for constraints in future timestep
-                future_constraint_found = future_constraint_exists(i, curr['loc'][i], curr['timestep'], table)
+                future_constraint_found = future_constraint_exists(meta_agent[i], meta_agent, curr['loc'][i], curr['timestep'], table)
                 if future_constraint_found:
                     print("future constraint found!!")
                     break
@@ -274,7 +286,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
             else:
                 ma_dirs_list.append(list(range(5)))
 
-
+        assert len(ma_dirs_list) == ma_length
         # all combinations of directions for each agent in meta_agent for next timestep
         # ma_dirs = product(list(range(5)),repeat =len(meta_agent))
         ma_dirs = product(*ma_dirs_list) # create "nested loop with available moves"

@@ -669,7 +669,12 @@ class CBSSolver(object):
                 for a in ma:
                     print (q['paths'][a])
 
+
+                # skip this if constraint is positive
                 path = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(ma),q['constraints']) 
+
+                if constraint['positive']:
+                    assert path
 
                 if path is not None:
                     for i, agent in enumerate(ma):
