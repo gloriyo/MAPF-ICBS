@@ -135,10 +135,18 @@ def future_constraint_exists(agent, agent_loc, timestep, constraint_table):
         # if t is a future timestep which exists in constraint table
         if t > timestep:
             # all constraints for timestep t in table 
+            print("future constraints at timestep ", t)
+
+
             for constraint in constraint_table[t]:
-                if constraint['loc'] == agent_loc:
-                    assert agent != constraint['agent'] # idk if this should happen/what to do if this happens
+                print(constraint)
+                # last loc in vertex/edge constraint
+                if constraint['loc'][-1] == agent_loc:
+                    # assert agent != constraint['agent'] # idk if this should happen/what to do if this happens... nvm oh im dumb
+                    if(agent == constraint['agent'] and constraint['positive']):
+                        continue
                     return True
+                
     return False
 
 
@@ -180,6 +188,9 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
     table = build_constraint_table(constraints, meta_agent)
 
+    print("> build constraint table")
+    print(table)
+
     # combined h value for agents in meta-agent
     for agent in meta_agent:
         h_value = h_values[agent][start_locs[agent]]
@@ -201,7 +212,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
         print('pop node w/ f val: ', curr['g_val'] + curr['h_val'])
 
-        #############################
+
 
         # check if all agents have reached their goal states
         for i in range(len(meta_agent)):
@@ -213,16 +224,16 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
             # check if there are future (external) constraints left
             for i in range(len(meta_agent)):
                 # if current agent has reached its goal
-                if curr['loc'][i] == goal_loc[meta_agent[i]]:
-                    # check for constraints in future timestep
-                    future_constraint_found = future_constraint_exists(i, curr['loc'][i], curr['timestep'], table)
-                    if future_constraint_found:
-                        break
+                assert curr['loc'][i] == goal_loc[meta_agent[i]]
+                # check for constraints in future timestep
+                future_constraint_found = future_constraint_exists(i, curr['loc'][i], curr['timestep'], table)
+                if future_constraint_found:
+                    print("future constraint found!!")
+                    break
+
             else: # all agents do not violate future constraints
                 print('Returning path....')
-                print(get_path(curr,meta_agent))
-                
-                # print("\nEND OF A*\n") # comment out if needed
+                print(get_path(curr,meta_agent), '\n')
                 
                 return get_path(curr,meta_agent)
 
@@ -230,11 +241,8 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
         ma_dirs = product(list(range(5)),repeat =len(meta_agent))
 
 
-        # print('\nALL DIRS ', ma_dirs)
         # each 'dirs' contains 1 possible direction for each agent 
         for dirs in ma_dirs:
-            # print('dir ', dirs)
-            # child_loc = [move(curr['loc'][i], node[i]) for i in range(len(meta_agent))]
 
             child_loc = []
 
@@ -245,7 +253,6 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
             for a in range(ma_length):
                 aloc = move(curr['loc'][a], dirs[a])
                 # vertex collision; check for duplicates in child_loc
-
                 if aloc in child_loc:
                     invalid_move = True
                     break
@@ -254,8 +261,6 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
             if invalid_move:
                 continue
 
-            # print('curr loc  ', curr['loc'])
-            # print('child loc ', child_loc)
 
             for ai in range(ma_length):
                 # edge collision: check for matching locs in curr_loc and child_loc between two agents
@@ -270,7 +275,6 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
             # check map constraints and external constraints
             for i in range(len(child_loc)):
-                # print(curr['loc'][i], '   ',child_loc[i],'    ',curr['timestep']+1)
                 loc= child_loc[i]
                 # agent out of map bounds
                 if loc[0]<0 or loc[0]>= len(my_map) or loc[1]<0 or loc[1]>=len(my_map[0]):
@@ -280,7 +284,6 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                 if my_map[loc[0]][loc[1]]:
                     invalid_move = True
                     break
-                # print('is constrainted   ',is_constrained(curr['loc'][i],loc,curr['timestep']+1,table))
                 # agent is externally constrained
                 if is_constrained(curr['loc'][i],loc,curr['timestep']+1,table, meta_agent[i]):
                     invalid_move = True
@@ -288,9 +291,6 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
             if invalid_move:
                 continue
-            
-            # print('agent',agent, '       ' ,child_loc)
-
 
             # find h_values for current moves
             h_value = 0
@@ -305,7 +305,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
 
             child = {'loc': child_loc,
-                    'g_val': curr['g_val']+1,
+                    'g_val': curr['g_val']+ma_length,
                     'h_val': h_value,
                     'parent': curr,
                     'timestep':curr['timestep']+1

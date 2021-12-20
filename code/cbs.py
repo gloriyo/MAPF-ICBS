@@ -448,6 +448,7 @@ class CBSSolver(object):
 
             print('Sending ma2 in collision {} to A* '.format(ma2))
 
+
             assert temp_constraints[1]['meta_agent'] == ma2
             path2_constraints = combined_constraints(p['constraints'], temp_constraints[1])
             alt_paths2 = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(ma2),path2_constraints)
@@ -663,6 +664,10 @@ class CBSSolver(object):
 
                 print('\nSending meta_agent {} of constrained agent {} to A* '.format(ma, constraint['agent']))
                 print('\twith constraints ', q['constraints'])
+
+                for a in ma:
+                    print (q['paths'][a])
+
                 path = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(ma),q['constraints']) 
 
                 if path is not None:
@@ -687,6 +692,11 @@ class CBSSolver(object):
                             
                             print('\nSending meta-agent violating constraint {} to A* '.format(v_ma))
                             print('\twith constraints ', q['constraints'])
+
+                            for a in v_ma:
+                                print (q['paths'][a])
+
+
                             v_ma_list = list(v_ma) # should use same list for all uses
                             path_v_ma = ma_star(self.my_map,self.starts,self.goals,self.heuristics,v_ma_list,q['constraints'])
                             
@@ -764,6 +774,10 @@ class CBSSolver(object):
 
                 print('Sending newly merged meta_agent {} to A* '.format(meta_agent))
                 print('\twith constraints ', p['constraints'])
+
+                for a in ma:
+                    print (q['paths'][a])
+
 
                 # Update paths
                 meta_agent_paths = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent),p['constraints'])
