@@ -14,6 +14,8 @@ def get_sum_of_cost(paths):
     for path in paths:
         # print(path)
         rst += len(path) - 1
+        if(len(path)>1):
+            assert path[-1] != path[-2]
     return rst
 
 
@@ -135,6 +137,23 @@ def is_constrained(curr_loc, next_loc, timestep, constraint_table, agent):
 
     return False
 
+# returns whether agent violates its positive constraint
+def violates_pos_constraint(curr_loc, next_loc, timestep, constraint_table, agent):
+    if timestep not in constraint_table:
+        return False
+    for constraint in constraint_table[timestep]:
+        if agent == constraint['agent'] and constraint['positive']:
+            # vertex constraint
+            if len(constraint['loc']) == 1:
+                if next_loc != constraint['loc'][0]:
+                    return True
+            # edge constraint
+            else:
+                if constraint['loc'] != [curr_loc, next_loc]:
+                    return True
+    return False
+    
+
 # future external constraints
 def future_constraint_exists(agent, meta_agent, agent_loc, timestep, constraint_table):
     for t in constraint_table:
@@ -169,6 +188,7 @@ def future_constraint_exists(agent, meta_agent, agent_loc, timestep, constraint_
                         return True
                 
     return False
+
 
 
 def push_node(open_list, node):
@@ -247,23 +267,25 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                     curr['reached_goal'][a] = True
 
         # check if all agents have reached their goal states
-        for i in range(len(meta_agent)):
+        for a in range(len(meta_agent)):
             # if curr['loc'][i] == goal_loc[meta_agent[i]] or curr['loc'][i] == goal_loc[0]:
-            if curr['loc'][i] != goal_loc[meta_agent[i]]:
+            # if curr['loc'][i] != goal_loc[meta_agent[i]]:
+            #     break
+            if curr['reached_goal'][a] == False:
                 break
         else: # all agents reached goal_locations
         
-            # check if there are future (external) constraints left
-            for i in range(len(meta_agent)):
-                # if current agent has reached its goal
-                assert curr['loc'][i] == goal_loc[meta_agent[i]]
-                # check for constraints in future timestep
-                future_constraint_found = future_constraint_exists(meta_agent[i], meta_agent, curr['loc'][i], curr['timestep'], table)
-                if future_constraint_found:
-                    print("future constraint found!!")
-                    break
+            # # check if there are future (external) constraints left
+            # for i in range(len(meta_agent)):
+            #     # if current agent has reached its goal
+            #     assert curr['loc'][i] == goal_loc[meta_agent[i]]
+            #     # check for constraints in future timestep
+            #     future_constraint_found = future_constraint_exists(meta_agent[i], meta_agent, curr['loc'][i], curr['timestep'], table)
+            #     if future_constraint_found:
+            #         print("future constraint found!!")
+            #         break
 
-            else: # all agents do not violate future constraints
+            # else: # all agents do not violate future constraints
                 print('Returning path....')
                 # print(get_path(curr,meta_agent), '\n')
                 
@@ -305,7 +327,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
         # each 'dirs' contains 1 possible direction for each remaining agent 
         for dirs in ma_dirs:
 
-            print('dirs: ', dirs)
+            # print('dirs: ', dirs)
 
             invalid_move = False
             child_loc = copy.deepcopy(curr['loc'])
@@ -375,7 +397,11 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                 if is_constrained(curr['loc'][i],loc,curr['timestep']+1,table, meta_agent[i]):
                     invalid_move = True
                     break
-                # agent does not abide by positive constraint
+                # agent has a positive constraint and doesn't meet its positive constraint
+                if violates_pos_constraint(curr['loc'][i],loc,curr['timestep']+1,table, meta_agent[i]):
+                    print('agent {} must follow positive constraint'.format(meta_agent[i]))
+                    invalid_move = True
+                    break
 
             if invalid_move:
                 continue
