@@ -168,7 +168,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
     #           rather than space domain, only.
     
     # This is so I know which part is not CBS when debugging CBS with A*
-    print("\nSTARTING A*\n") # comment out if needed
+    # print("\nSTARTING A*\n") # comment out if needed
 
     open_list = []
     closed_list = dict()
@@ -189,7 +189,6 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
             'h_val': h_value, 
             'parent': None,
             'timestep': 0,
-            'cost_after_finish':[-1 for i in range(len(meta_agent))],
             'reached_goal': [False for i in range(len(meta_agent))]
             }
 
@@ -199,6 +198,9 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
     
     while len(open_list) > 0:
         curr = pop_node(open_list)
+
+        print('pop node w/ f val: ', curr['g_val'] + curr['h_val'])
+
         #############################
 
         # check if all agents have reached their goal states
@@ -217,17 +219,21 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                     if future_constraint_found:
                         break
             else: # all agents do not violate future constraints
+                print('Returning path....')
                 print(get_path(curr,meta_agent))
                 
-                print("\nEND OF A*\n") # comment out if needed
+                # print("\nEND OF A*\n") # comment out if needed
                 
                 return get_path(curr,meta_agent)
 
         # all combinations of directions for each agent in meta_agent for next timestep
         ma_dirs = product(list(range(5)),repeat =len(meta_agent))
 
+
+        # print('\nALL DIRS ', ma_dirs)
         # each 'dirs' contains 1 possible direction for each agent 
         for dirs in ma_dirs:
+            # print('dir ', dirs)
             # child_loc = [move(curr['loc'][i], node[i]) for i in range(len(meta_agent))]
 
             child_loc = []
@@ -248,14 +254,14 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
             if invalid_move:
                 continue
 
-            print('curr loc  ', curr['loc'])
-            print('child loc ', child_loc)
+            # print('curr loc  ', curr['loc'])
+            # print('child loc ', child_loc)
 
             for ai in range(ma_length):
                 # edge collision: check for matching locs in curr_loc and child_loc between two agents
                 for aj in range(ma_length):
                     if ai != aj:
-                        print(ai, aj)
+                        # print(ai, aj)
                         if child_loc[ai] == curr['loc'][aj] and child_loc[aj] == curr['loc'][ai]:
                             invalid_move = True             
             
@@ -299,11 +305,10 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
 
             child = {'loc': child_loc,
-                    'g_val': curr['g_val'] + ma_length,
+                    'g_val': curr['g_val']+1,
                     'h_val': h_value,
                     'parent': curr,
-                    'timestep':curr['timestep']+1,
-                    'cost_after_finish':curr['cost_after_finish'][:]
+                    'timestep':curr['timestep']+1
                     }
 
             if (tuple(child['loc']),child['timestep']) in closed_list:
@@ -316,7 +321,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
                 push_node(open_list, child)   
     print('no solution')
 
-    print("\nEND OF A*\n") # comment out if needed
+    # print("\nEND OF A*\n") # comment out if needed
     return None
 
 

@@ -403,15 +403,7 @@ class CBSSolver(object):
             cardinality = 'non-cardinal'
 
             # temporary constraints (standard splitting) for detecting cardinal collision purposes
-            temp_constraints = standard_splitting(collision) 
-
-
-            # for c in p['constraints']:
-            #     if c not in temp_constraints:
-            #         temp_constraints.append(c)
-
-            # temp_constraints = combined_constraints(p['constraints'], temp_constraints)                        
-            # assert len(temp_constraints) > len(p['constraints']) # do not change original
+            temp_constraints = standard_splitting(collision)
 
 
             ma1 = collision['ma1'] #agent a1
