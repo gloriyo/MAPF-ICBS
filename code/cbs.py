@@ -331,14 +331,17 @@ class CBSSolver(object):
             self.heuristics.append(compute_heuristics(my_map, goal))
 
     def push_node(self, node):
+
         heapq.heappush(self.open_list, (node['cost'], len(node['ma_collisions']), self.num_of_generated, node))
         print("> Generate node {} with cost {}".format(self.num_of_generated, node['cost']))
+
         self.num_of_generated += 1
         
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
         print("> Expand node {} with cost {}".format(id, node['cost']))
+
         self.num_of_expanded += 1
         return node
 
@@ -374,30 +377,20 @@ class CBSSolver(object):
         }       
         
         for i in range(self.num_of_agents):  # Find initial path for each agent
+
             path = ma_star(self.my_map, self.starts, self.goals, self.heuristics,
                           [i], root['constraints'])
+
             if path is None:
                 raise BaseException('No solutions')
             root['ma_list'].append({i})
             root['paths'].extend(path)
 
 
-
         root['cost'] = get_sum_of_cost(root['paths'])
         root['ma_collisions'] = detect_collisions(root['paths'], root['ma_list'])
         root['agent_collisions'] = numpy.zeros((self.num_of_agents, self.num_of_agents))
         self.push_node(root)
-
-
-        ##############################
-        # Task 3.3: High-Level Search
-        #           Repeat the following as long as the open list is not empty:
-        #             1. Get the next node from the open list (you can use self.pop_node()
-        #             2. If this node has no collision, return solution
-        #             3. Otherwise, choose the first collision and convert to ap['ma_collisions'].index(chosen_collision)list of constraints (using your
-        #                standard_splitting function). Add a new child node to your open list for each constraint
-        #           Ensure to create a copy of any objects that your child nodes might inherit
-
 
         # algorithm for detecting cardinality
         # as 'non-cardinal' or 'semi-cardinal' or 'cardinal'
@@ -569,9 +562,11 @@ class CBSSolver(object):
                 print('reached maximum number of nodes. Returning...')
                 return None 
             print('\n')  
+
             p = self.pop_node()
             if p['ma_collisions'] == []:
                 self.print_results(p)
+
                 # for pa in p['paths']:
                 #     # print('asfasdfasdf       ',pa)
                 return p['paths'], self.num_of_generated, self.num_of_expanded # number of nodes generated/expanded for comparing implementations
@@ -687,6 +682,7 @@ class CBSSolver(object):
                 if constraint['positive']:
                     assert path
 
+
                 if path is not None:
                     for i, agent in enumerate(ma):
 
@@ -701,6 +697,7 @@ class CBSSolver(object):
                     # task 4
                     # continue_flag = False
                     if constraint['positive']:
+
                         # vol = paths_violate_constraint(constraint,q['paths'])
                         violating_ma_list = meta_agents_violate_constraint(constraint, q['paths'], q['ma_list'])
                         no_solution = False
