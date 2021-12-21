@@ -591,7 +591,7 @@ class ICBS_Solver(object):
             # else: # no cardinal collisions found
             if collision_type != 'cardinal':
                 for collision in p['ma_collisions']:
-                    collision_type = collision_cardinalities[p['collisions'].index(collision)]
+                    collision_type = collision_cardinalities[p['ma_collisions'].index(collision)]
                     # collision_type = detect_cardinal_conflict(self, p, collision)
                     if collision_type == 'semi-cardinal':    
                         
