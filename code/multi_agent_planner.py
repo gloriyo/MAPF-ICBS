@@ -320,6 +320,7 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
         # all combinations of directions for each agent in meta_agent for next timestep
         # ma_dirs = product(list(range(5)),repeat =len(meta_agent))
+        
         ma_dirs = product(*ma_dirs_list) # create "nested loop with available moves"
 
        
@@ -357,18 +358,6 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
 
             if invalid_move:
                 continue
-
-            # # move each agent for new timestep & check for (internal) conflicts with each other
-            # for a in range(s_ma_length):
-            #     aloc = move(curr['loc'][a], dirs[a])
-            #     # vertex collision; check for duplicates in child_loc
-            #     if aloc in child_loc:
-            #         invalid_move = True
-            #         break
-            #     child_loc.append(move(curr['loc'][a], dirs[a]))
-
-            # if invalid_move:
-            #     continue
 
 
             for ai in range(ma_length):
@@ -412,12 +401,6 @@ def ma_star(my_map, start_locs, goal_loc, h_values, meta_agent, constraints):
             h_value = 0
             for i in range(ma_length):
                 h_value += h_values[meta_agent[i]][child_loc[i]]
-
-
-            # find g_values for currunt moves
-            g_value = curr['g_val'] # i'm not too sure if g_val should be increased conditionally
-            # edit: I don't think it should because new node is new node (new branch in A*) even if some agents have reached their goals
-            # edit 2: h_value is 's_ma_length' times single agent h_value.... adjust g_value accordingly? 
 
 
 
