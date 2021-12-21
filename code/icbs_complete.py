@@ -511,6 +511,7 @@ class ICBS_Solver(object):
             ma2 = collision['ma2']
             
             # check it is same meta-agent
+            # assert ma1 != ma2
 
             for ai in ma1:
                 for aj in ma2:
@@ -735,20 +736,10 @@ class ICBS_Solver(object):
                                 no_solution = True
                                 break # move on the next constraint
                                 
-                            # for i in range(len(v_ma)):
-                            #     if path_v_ma[i] is None:
-                            #         continue_flag = True
-                            #         break
-                            # else: 
-                            #     for i in range(len(v_ma)): 
-                            #         q['paths'][list(v_ma)[i]] = path_v_ma[i]
-                                # print('asdfasfasdf        ',q['paths'])
                         if no_solution:
                             continue # move on to the next constraint
 
-                        # if continue_flag:
-                        #     continue
-                    print("no solution? should not be here...")  
+                    # print("no solution? should not be here...")  
                     q['ma_collisions'] = detect_collisions(q['paths'],q['ma_list'])
 
 
@@ -760,12 +751,6 @@ class ICBS_Solver(object):
                     assert chosen_collision not in q['ma_collisions']
 
                     q['cost'] = get_sum_of_cost(q['paths'])
-
-                    # CHECK BYPASS HERE.......
-                    #     if q['cost'] == p['cost'] \
-                    #         and (len(q['ma_collisions']) < len(p['ma_collisions'])):
-
-                    # if bypass is found, push only the current child and exit loop
 
 
                     # assert that bypass is not possible if cardinal
@@ -789,7 +774,7 @@ class ICBS_Solver(object):
             assert not bypass_successful
 
             # MA-CBS
-            if should_merge(collision,p):
+            if should_merge(collision,p, 7):
                 print('> Merge meta-agents into a new')
                 # returns meta_agent, ma_list
                 meta_agent, updated_ma_list = merge_agents(self, collision, p['ma_list'])
@@ -838,7 +823,8 @@ class ICBS_Solver(object):
                     self.push_node(updated_node)    
 
                     continue # start of while loop
-
+            else:
+                print("do not merge")
                 
             assert len(child_nodes) <= 2
             print('bypass not found')
