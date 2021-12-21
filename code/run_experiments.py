@@ -2,7 +2,13 @@
 import argparse
 import glob
 from pathlib import Path
-from cbs import CBSSolver
+from basic_cbs import CBSSolver # original cbs with standard/disjoint splitting
+
+# cbs with different improvements
+from icbs_cardinal_bypass import ICBS_CB_Solver # only cardinal dectection and bypass
+from icbs_complete import ICBS_Solver # all improvements including MA-CBS
+
+
 from independent import IndependentSolver
 from prioritized import PrioritizedPlanningSolver
 from visualize import Animation
@@ -85,29 +91,76 @@ if __name__ == '__main__':
 
     result_file = open("results.csv", "w", buffering=1)
 
+    # node_results_file = open("nodes-cleaned.csv", "w", buffering=1)
+
+    nodes_gen_file = open("nodes-gen-cleaned.csv", "w", buffering=1)
+    nodes_exp_file = open("nodes-exp-cleaned.csv", "w", buffering=1)
+
+
     for file in sorted(glob.glob(args.instance)):
 
         print("***Import an instance***")
+        print(file)
         my_map, starts, goals = import_mapf_instance(file)
         print_mapf_instance(my_map, starts, goals)
 
         if args.solver == "CBS":
             print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, goals)
-            paths = cbs.find_solution(args.disjoint)
+            solution = cbs.find_solution(args.disjoint)
+
+            if solution is not None:
+                # print(solution)
+                paths, nodes_gen, nodes_exp = [solution[i] for i in range(3)]
+                if paths is None:
+                    raise BaseException('No solutions')  
+            else:
+                raise BaseException('No solutions')
+
+        elif args.solver == "ICBS_CB":
+            print("***Run CBS***")
+            cbs = ICBS_CB_Solver(my_map, starts, goals)
+            solution = cbs.find_solution(args.disjoint)
+
+            if solution is not None:
+                # print(solution)
+                paths, nodes_gen, nodes_exp = [solution[i] for i in range(3)]
+                if paths is None:
+                    raise BaseException('No solutions')  
+            else:
+                raise BaseException('No solutions')
+
+        elif args.solver == "ICBS":
+            print("***Run CBS***")
+            cbs = ICBS_Solver(my_map, starts, goals)
+            solution = cbs.find_solution(args.disjoint)
+
+            if solution is not None:
+                # print(solution)
+                paths, nodes_gen, nodes_exp = [solution[i] for i in range(3)]
+                if paths is None:
+                    raise BaseException('No solutions')  
+            else:
+                raise BaseException('No solutions')
+
+
         elif args.solver == "Independent":
             print("***Run Independent***")
             solver = IndependentSolver(my_map, starts, goals)
-            paths = solver.find_solution()
+            paths, nodes_gen, nodes_exp = solver.find_solution()
         elif args.solver == "Prioritized":
             print("***Run Prioritized***")
             solver = PrioritizedPlanningSolver(my_map, starts, goals)
-            paths = solver.find_solution()
+            paths, nodes_gen, nodes_exp = solver.find_solution()
         else:
             raise RuntimeError("Unknown solver!")
 
         cost = get_sum_of_cost(paths)
         result_file.write("{},{}\n".format(file, cost))
+
+        nodes_gen_file.write("{},{}\n".format(file, nodes_gen))
+        nodes_exp_file.write("{},{}\n".format(file, nodes_exp))
+
 
 
         if not args.batch:

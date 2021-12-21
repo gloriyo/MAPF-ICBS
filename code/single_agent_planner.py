@@ -5,10 +5,12 @@ def move(loc, dir):
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
 
-def get_sum_of_cost(paths):
+def get_sum_of_cost(agents):
     rst = 0
-    for path in paths:
-        rst += len(path) - 1
+    ('agentprints                                                         ', agents)
+    for agent in agents:
+        # print('path',agent)
+        rst += len(agent) - 1
     return rst
 
 
