@@ -91,7 +91,11 @@ if __name__ == '__main__':
 
     result_file = open("results.csv", "w", buffering=1)
 
-    node_results_file = open("nodes-results.csv", "w", buffering=1)
+    # node_results_file = open("nodes-cleaned.csv", "w", buffering=1)
+
+    nodes_gen_file = open("nodes-gen-cleaned.csv", "w", buffering=1)
+    nodes_exp_file = open("nodes-exp-cleaned.csv", "w", buffering=1)
+
 
     for file in sorted(glob.glob(args.instance)):
 
@@ -154,7 +158,9 @@ if __name__ == '__main__':
         cost = get_sum_of_cost(paths)
         result_file.write("{},{}\n".format(file, cost))
 
-        node_results_file.write("{}\n{},{}\n".format(file, nodes_gen, nodes_exp))
+        nodes_gen_file.write("{},{}\n".format(file, nodes_gen))
+        nodes_exp_file.write("{},{}\n".format(file, nodes_exp))
+
 
 
         if not args.batch:
