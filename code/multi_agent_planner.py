@@ -170,14 +170,6 @@ def future_constraint_exists(agent, meta_agent, agent_loc, timestep, constraint_
                 # last loc in vertex/edge constraint
 
                 if constraint['loc'][-1] == agent_loc:
-                    # assert agent != constraint['agent'] # idk if this should happen/what to do if this happens... nvm oh im dumb
-                    # if(agent == constraint['agent'] and constraint['positive']):
-                    #     continue
-                    # if(agent != constraint['agent'] and not constraint['positive']):
-                    #     assert constraint['positive'] == False
-                    #     continue
-
-                    #  both sets of ifs above and below should do the same thing
 
                     if agent == 2:
                         print('current timestep: {}, const timestep: {}'.format(timestep, constraint['timestep']))

@@ -197,6 +197,13 @@ class CBSSolver(object):
         """
 
         self.start_time = timer.time()
+        
+        if disjoint:
+            splitter = disjoint_splitting
+        else:
+            splitter = standard_splitting
+        print("USING: ", splitter)
+
 
         # Generate the root node
         # constraints   - list of constraints
@@ -241,7 +248,9 @@ class CBSSolver(object):
                 return p['paths'], self.num_of_generated, self.num_of_expanded # number of nodes generated/expanded for comparing implementations
             collision = p['collisions'].pop(0)
             # constraints = standard_splitting(collision)
-            constraints = disjoint_splitting(collision)
+            # constraints = disjoint_splitting(collision)
+            constraints = splitter(collision)
+
             for constraint in constraints:
                 q = {'cost':0,
                     'constraints': [constraint],
