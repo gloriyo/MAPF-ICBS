@@ -1,12 +1,9 @@
 import time as timer
 import heapq
 import random
-# from single_agent_planner import compute_heuristics, a_star, get_location
-from multi_agent_planner import ma_star,get_sum_of_cost, compute_heuristics, get_location
-import math
+from multi_agent_planner import ma_star, compute_heuristics, get_sum_of_cost, get_location
 import math
 import copy
-
 import numpy
 
 '''
@@ -61,15 +58,6 @@ def detect_collisions(paths, ma_list, collisions=None):
             if detect_collision(paths[ai],paths[aj]) !=None:
                 position,t = detect_collision(paths[ai],paths[aj])
 
-                # # find meta-agent group for each agent
-                # ma_i = {ai}
-                # ma_j = {aj}
-                # find meta-agents of agents in collision 
-                # for ma in ma_list:
-                #     if ai in ma:
-                #         ma_i = ma
-                #     elif aj in ma:
-                #         ma_j = ma
                 assert isinstance(ma_list , list)
                 ma_i = get_ma_of_agent(ai, ma_list)
                 assert isinstance(ma_list , list)
@@ -283,9 +271,6 @@ def combined_constraints(constraints, new_constraints, updated_constraints=None)
     else:
         updated_constraints = [new_constraints]
 
-    # print('combining constraints:')
-    # print('const1: ', constraints)
-    # print('const2: ', updated_constraints)
 
 
     for c in constraints:
@@ -318,7 +303,6 @@ class ICBS_Solver(object):
         self.starts = starts
         self.goals = goals
         self.num_of_agents = len(goals)
-        # self.discarded_agents = []
         self.num_of_generated = 0
         self.num_of_expanded = 0
         self.CPU_time = 0
@@ -562,7 +546,6 @@ class ICBS_Solver(object):
 
             return meta_agent, ma_list
 
-        # ATTENTION: THE CBS LOOOOOOOOOOOOP ============@#￥#%#@￥@#%##@￥======  STARTS ---#￥%------   HERE  ---- @
         # normal CBS with disjoint and standard splitting
         while len(self.open_list) > 0:
             if self.num_of_generated > 50000:
@@ -572,8 +555,7 @@ class ICBS_Solver(object):
             p = self.pop_node()
             if p['ma_collisions'] == []:
                 self.print_results(p)
-                # for pa in p['paths']:
-                #     # print('asfasdfasdf       ',pa)
+
                 return p['paths'], self.num_of_generated, self.num_of_expanded # number of nodes generated/expanded for comparing implementations
 
 
@@ -587,6 +569,8 @@ class ICBS_Solver(object):
             # select a cardinal conflict;
             # if none, select a semi-cardinal conflict
             # if none, select a random conflict
+            collision_cardinalities = None
+            collision_cardinalities = []
             chosen_collision = None
             new_constraints = None
             collision_type = None
@@ -595,23 +579,26 @@ class ICBS_Solver(object):
                 print(collision)
 
                 collision_type = detect_cardinal_conflict(self, p, collision)
+                collision_cardinalities.append(collision_type) # change to dictionary...
                 if collision_type == 'cardinal' and new_constraints is None:    
                     print('Detected cardinal collision. Chose it.')
                     print(collision)
 
                     chosen_collision = collision
-                    # collision_type = 'cardinal'
+                    collision_type = 'cardinal'
                     break
 
-            else: # no cardinal collisions found
+            # else: # no cardinal collisions found
+            if collision_type != 'cardinal':
                 for collision in p['ma_collisions']:
-                    collision_type = detect_cardinal_conflict(self, p, collision)
+                    collision_type = collision_cardinalities[p['ma_collisions'].index(collision)]
+                    # collision_type = detect_cardinal_conflict(self, p, collision)
                     if collision_type == 'semi-cardinal':    
                         
                         print('Detected semi-cardinal collision. Chose it.')
                         print(collision)
                         chosen_collision = collision
-                        # collision_type = 'semi-cardinal'
+                        collision_type = 'semi-cardinal'
                         break
 
                 else: # no semi-cardinal collision found
@@ -766,7 +753,6 @@ class ICBS_Solver(object):
                     #         and (len(q['ma_collisions']) < len(p['ma_collisions'])):
 
                     # if bypass is found, push only the current child and exit loop
-
 
                     # assert that bypass is not possible if cardinal
                     if collision_type == 'cardinal':
