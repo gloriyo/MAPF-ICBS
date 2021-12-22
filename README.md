@@ -1,12 +1,14 @@
 # Multi-Agent Path Finding - Improved Conflict Based Search 
 
-Improved CBS (ICBS) is an extension of the Conflict Based Search algorithm developed for the purpose of finding optimal paths for multiple agents on any given map without collisions. ICBS was presented as an extention of CBS at the IJCAI-15 Conference which incorporates several previously found improvements to CBS to accumulate their benifits.[^1] The algorithm has many practical applications, especially in the field of autonomous robotics. 
+Improved CBS (ICBS) is an extension of the Conflict Based Search algorithm developed for the purpose of finding optimal paths for multiple agents on any given map without collisions. ICBS was presented as an extension of CBS at the IJCAI-15 Conference which incorporates several previously found improvements to CBS to accumulate their benefits.[^1] The algorithm has many practical applications, especially in the field of autonomous robotics. 
 
 ## About Our Project ##
 In our version of improved CBS, we include an additional improvement to ICBS pertaining to the method in which collision-based constraints are created. A promising, new method for CBS-based MAPF has emerged called *disjoint splitting* which was published in May of this year (2021).[^2] Our goal was to combine the established improvements of ICBS with the up-and-coming method of constraint generation. Please see <a href="#background"><strong>Background</strong></a> below or our more detailed [report](final_report.pdf) on the subject for more information.
 
 <!-- ![demo instance](code/demo/fig21.gif) -->
-<img src="code/demo/fig21.gif" alt="demo" width="500"/>
+<img src="code/demo/fig21.gif" alt="demo" width="600"/>
+
+*Animation Program for MAPF provided by EAAI, please refer to acknowledgements*
 
 
 ## Installation & Usage ##
@@ -30,7 +32,7 @@ The following are options for `--solver`
 * `CBS_CB` version of CBS with Prioritizing and Bypassing Conflicts
 * `ICBS` Improved CBS with all improvements
 
-To use the `test_1.txt` instance available in `code/instances` with ICBS with disjoint splitting....
+To use the `test_1.txt` instance available in `code/instances` with ICBS with disjoint splitting...
 ```bash
 python3 --instance "instances/test_1.txt" --disjoint --solver ICBS
 ```
@@ -56,7 +58,8 @@ To prevent repeated merging of the highly conflicting agents elsewhere in the CT
 #### Disjoint Splitting with CBS ####
 The standard method of 'splitting' a conflict into constraints creates two child nodes with a negative constraint for each agent prohibiting it from being at the location when the collision occurred. Within the two sets of paths where neither of the agents are permitted to be at the site of conflict, duplications may occur. However, a more efficient method has been discovered in which one agent is chosen to receive constraints. The agent is given a *positive* constraint, forcing the agent to carry out the traversal which led to the collision, effectively creating a negative constraint for all other agents. The same agent is also given a negative constraint in the second child node. This *disjoint* method of splitting constraints is efficient at pruning nodes that would have introduced duplicate searches.[^2]
 
-
+## Acknowledgements
+Code templates and guidance for implementing original CBS and all visualization tools (including the one above) for the pathfinding solutions are provided at the EAAI archive of [Model Assignments](http://modelai.gettysburg.edu/). Thank you to our Professor, Dr. Ma for introducing us to the resources we needed to make this project possible.
 
 ### References ###
 
