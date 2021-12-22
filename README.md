@@ -15,7 +15,7 @@ Use dependency manager pipenv
 ```bash
 pipenv install --dev
 ```
-### Run Program ###
+### Running the Program ###
 Within the `code` directory...
 ```bash
 cd code
