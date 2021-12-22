@@ -97,9 +97,17 @@ if __name__ == '__main__':
     nodes_exp_file = open("nodes-exp-cleaned.csv", "w", buffering=1)
 
 
-    for file in sorted(glob.glob(args.instance)):
+    if args.batch:
+        
+        input_instance = sorted(glob.glob("instances/test*"))
+    else:
+        input_instance = sorted(glob.glob(args.instance))
+
+    for file in input_instance:
 
         print("***Import an instance***")
+
+        
         print(file)
         my_map, starts, goals = import_mapf_instance(file)
         print_mapf_instance(my_map, starts, goals)
@@ -168,6 +176,6 @@ if __name__ == '__main__':
             animation = Animation(my_map, starts, goals, paths)
             # animation.save("output.mp4", 1.0)
             animation.show()
-            animation.save('demo/fig.gif', 1)
+            # animation.save('demo/fig.gif', 1)
 
     result_file.close()
