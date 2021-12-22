@@ -9,6 +9,24 @@ In our version of improved CBS, we include an additional improvement to ICBS per
 ## Installation & Usage ##
 ### Dependencies ###
 Use dependency manager pipenv
+```bash
+pipenv install --dev
+```
+### Run Program ###
+Within the `code` directory...
+```bash
+cd code
+python3 [--instances <path>] [--disjoint] [--solver <solver>] [--batch]
+```
+The following are options for `--solver`
+* `CBS` the original CBS algorithm
+* `CBS_CB` version of CBS with Prioritizing and Bypassing Conflicts
+* `ICBS` Improved CBS with all improvements
+
+To use the `test_1` instance available in `code/instances` with ICBS with disjoint splitting....
+```bash
+python3 --instances "instances/test_1" --disjoint --solver ICBS
+```
 
 ## Background - CBS ##
 Originally developed by a dedicated team of MAPF researchers at the AAAI Association, Conflict Based Search (CBS) is a two-level algorithm that guarantees optimal paths for each agent in a map internally represented as a graph. At the higher-level, CBS generates a constraint tree (CT) and conducts a search on the tree based on conflicts between agents. At the lower-level, a search is conducted to find an optimal path for an agent with a set of given constraints. The low-level search is typically conducted by a variant of the A* algorithm.
