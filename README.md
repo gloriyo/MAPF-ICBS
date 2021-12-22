@@ -1,10 +1,13 @@
-## Multi-Agent Path Finding - Improved Conflict Based Search ##
+# Multi-Agent Path Finding - Improved Conflict Based Search 
 
 Improved CBS (ICBS) is an extension of the Conflict Based Search algorithm developed for the purpose of finding optimal paths for multiple agents on any given map without collisions. ICBS was presented as an extention of CBS at the IJCAI-15 Conference which incorporates several previously found improvements to CBS to accumulate their benifits.[^1] The algorithm has many practical applications, especially in the field of autonomous robotics. 
 
+## About Our Project ##
+In our version of improved CBS, we include an additional improvement to ICBS pertaining to the method in which collision-based constraints are created. A promising, new method for CBS-based MAPF has emerged called *disjoint splitting* which was published in May of this year (2021). Our goal was to combine the established improvements of ICBS with the up-and-coming method of constraint generation. Please see <a href="#background"><strong>Background</strong></a> below or our more detailed [report](final_report.pdf) on the subject for more information.
 
-## Our Contributions ##
-In our version of improved CBS, we include an additional improvement to ICBS pertaining to the method in which collision-based constraints are created. A promising, new method for CBS-based MAPF has emerged called *disjoint splitting* which was published in May of this year (2021). Our goal was to combine the established improvements of ICBS with the up-and-coming method of constraint generation. Please see **Background** or our more detailed report on the subject for more information.
+<!-- ![demo instance](code/demo/fig21.gif) -->
+<img src="code/demo/fig21.gif" alt="demo" width="500"/>
+
 
 ## Installation & Usage ##
 ### Dependencies ###
@@ -16,18 +19,22 @@ pipenv install --dev
 Within the `code` directory...
 ```bash
 cd code
-python3 [--instances <path>] [--disjoint] [--solver <solver>] [--batch]
+python3 [--instance <path>] [--solver <solver>] [--disjoint] [--batch]
 ```
+The flags
+* `--disjoint` CPS will use *disjoint splitting* rather than the default *standard splitting*
+* `--batch` will run all instances available in `code/instances`
+
 The following are options for `--solver`
 * `CBS` the original CBS algorithm
 * `CBS_CB` version of CBS with Prioritizing and Bypassing Conflicts
 * `ICBS` Improved CBS with all improvements
 
-To use the `test_1` instance available in `code/instances` with ICBS with disjoint splitting....
+To use the `test_1.txt` instance available in `code/instances` with ICBS with disjoint splitting....
 ```bash
-python3 --instances "instances/test_1" --disjoint --solver ICBS
+python3 --instance "instances/test_1.txt" --disjoint --solver ICBS
 ```
-
+<a name="background"></a>
 ## Background - CBS ##
 Originally developed by a dedicated team of MAPF researchers at the AAAI Association, Conflict Based Search (CBS) is a two-level algorithm that guarantees optimal paths for each agent in a map internally represented as a graph. At the higher-level, CBS generates a constraint tree (CT) and conducts a search on the tree based on conflicts between agents. At the lower-level, a search is conducted to find an optimal path for an agent with a set of given constraints. The low-level search is typically conducted by a variant of the A* algorithm.
 
@@ -52,7 +59,6 @@ The standard method of 'splitting' a conflict into constraints creates two child
 
 
 ### References ###
-References
 
 [^1]:	E. Boyarski et al., “ICBS: The Improved Conflict-Based Search Algorithm for Multi-Agent Pathfinding”, in SOCS, 2015.
 
