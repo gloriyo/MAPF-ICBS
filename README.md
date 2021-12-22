@@ -6,6 +6,9 @@ Improved CBS (ICBS) is an extension of the Conflict Based Search algorithm devel
 ## Our Contributions ##
 In our version of improved CBS, we include an additional improvement to ICBS pertaining to the method in which collision-based constraints are created. A promising, new method for CBS-based MAPF has emerged called *disjoint splitting* which was published in May of this year (2021). Our goal was to combine the established improvements of ICBS with the up-and-coming method of constraint generation. Please see **Background** or our more detailed report on the subject for more information.
 
+## Installation & Usage ##
+### Dependencies ###
+Use dependency manager pipenv
 
 ## Background - CBS ##
 Originally developed by a dedicated team of MAPF researchers at the AAAI Association, Conflict Based Search (CBS) is a two-level algorithm that guarantees optimal paths for each agent in a map internally represented as a graph. At the higher-level, CBS generates a constraint tree (CT) and conducts a search on the tree based on conflicts between agents. At the lower-level, a search is conducted to find an optimal path for an agent with a set of given constraints. The low-level search is typically conducted by a variant of the A* algorithm.
