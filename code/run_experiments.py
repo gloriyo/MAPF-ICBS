@@ -168,4 +168,6 @@ if __name__ == '__main__':
             animation = Animation(my_map, starts, goals, paths)
             # animation.save("output.mp4", 1.0)
             animation.show()
+            animation.save('demo/fig.gif', 1)
+
     result_file.close()
