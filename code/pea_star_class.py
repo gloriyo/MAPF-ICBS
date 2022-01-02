@@ -65,7 +65,7 @@ def get_location(path, time):
 
 def get_path(goal_node,meta_agent):
 
-    print('\n')
+    # print('\n')
 
     path = []
     for i in range(len(meta_agent)):
@@ -79,7 +79,7 @@ def get_path(goal_node,meta_agent):
         path[i].reverse()
         assert path[i] is not None
 
-        print(path[i])
+        # print(path[i])
 
         if len(path[i]) > 1: 
             # remove trailing duplicates
@@ -91,7 +91,7 @@ def get_path(goal_node,meta_agent):
                     break
             # assert path[i][-1] != path[i][-2] # no repeats at the end!!
 
-    print('\n')
+    # print('\n')
 
     assert path is not None
     return path
@@ -99,7 +99,7 @@ def get_path(goal_node,meta_agent):
 
 def get_path_test(node,meta_agent):
 
-    print('\n')
+    # print('\n')
 
     path = []
     for i in range(len(meta_agent)):
@@ -113,21 +113,21 @@ def get_path_test(node,meta_agent):
         path[i].reverse()
         assert path[i] is not None
 
-        print(path[i])
+        # print(path[i])
 
         if node['reached_goal'][i]:
-            print(meta_agent[i], "HAS REACH GOAL")
+            # print(meta_agent[i], "HAS REACH GOAL")
             if len(path[i]) > 1: 
                 # remove trailing duplicates
                 while path[i][-1] == path[i][-2]:
                     # path[i].remove(path[i][-1])
                     path[i].pop()
-                    print(path[i])
+                    # print(path[i])
                     if len(path[i]) <= 1:
                         break
                 # assert path[i][-1] != path[i][-2] # no repeats at the end!!
 
-    print('\n')
+    # print('\n')
 
     assert path is not None
     return path
@@ -284,7 +284,7 @@ class PEA_Star(object):
                 if len(constraint['loc']) == 1:
                     # positive constraint
                     if constraint['positive'] and next_loc != constraint['loc'][0]:
-                        print("time {} positive constraint : {}".format(timestep, constraint))
+                        # print("time {} positive constraint : {}".format(timestep, constraint))
                         return constraint
                     # negative constraint
                     elif not constraint['positive'] and next_loc == constraint['loc'][0]:
@@ -293,7 +293,7 @@ class PEA_Star(object):
                 # edge constraint
                 else:
                     if constraint['positive'] and constraint['loc'] != [curr_loc, next_loc]:
-                        print("time {} positive constraint : {}".format(timestep, constraint))
+                        # print("time {} positive constraint : {}".format(timestep, constraint))
                         return constraint
                     if not constraint['positive'] and constraint['loc'] == [curr_loc, next_loc]:
                         # print("time {} negative constraint : {}".format(timestep, constraint))
@@ -315,12 +315,12 @@ class PEA_Star(object):
                     if len(constraint['loc']) == 1:
                         # positive constraint
                         if constraint['positive'] and curr_loc != constraint['loc'][0]:
-                            print("future time {} positive constraint : {}".format(t, constraint))
+                            # print("future time {} positive constraint : {}".format(t, constraint))
                             return True
                         # negative constraint
                         elif not constraint['positive'] and curr_loc == constraint['loc'][0]:
                             # print("time {} negative constraint : {}".format(timestep, constraint))
-                            print("future time {} negative constraint : {}".format(t, constraint))
+                            # print("future time {} negative constraint : {}".format(t, constraint))
                             return True
 
 
@@ -401,7 +401,7 @@ class PEA_Star(object):
 
             # g_value = curr['g_val']+ curr['reached_goal'].count(False)
             num_moves = curr['reached_goal'].count(False)
-            print("(edge) cost (curr -> child) in a* tree == ", num_moves)
+            # print("(edge) cost (curr -> child) in a* tree == ", num_moves)
 
             
             # 'reached_goal' not true if future constraints => not true cost b/c not reached_goal[i] != cost increase
@@ -444,16 +444,13 @@ class PEA_Star(object):
                     } 
 
 
-            get_path_test(curr, self.agents)
+            # # USE TO TEST g_val AND reached_goal
+            # get_path_test(curr, self.agents)
+            # g_test = get_sum_of_cost( get_path_test(child, self.agents) ) # inefficient, to-do: check if future constraints violated instread
+            # print(g_test, g_value)
+            # assert g_value == g_test
 
-            g_test = get_sum_of_cost( get_path_test(child, self.agents) ) # inefficient, to-do: check if future constraints violated instread
-
-
-            print(g_test, g_value)
-
-            assert g_value == g_test
-
-            child['g_val'] = g_test
+            child['g_val'] = g_value
 
             # print(child)
 
