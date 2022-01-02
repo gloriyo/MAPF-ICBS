@@ -175,6 +175,8 @@ class EPEA_Star(object):
         self.c_table = [] # constraint table
         self.max_constraints = np.zeros((len(self.agents),), dtype=int)
 
+        self.osf_table = dict()
+
 
     def push_node(self, node):
 
@@ -418,24 +420,26 @@ class EPEA_Star(object):
 
         children_with_F = []
         next_F = None
-        table_key = (tuple(node['loc'], node['timestep'], node['g_val']))
+        table_key = (tuple(node['loc']), node['timestep'], node['g_val'])
         if table_key in self.osf_table:
             children = copy.deepcopy(self.osf_table[table_key])
             for child in children:
-                if child['f_val'] == node['F_val']:
+                child_f = child['g_val'] + child['h_val']
+                if child_f == node['F_val']:
                     children_with_F.append(child)
 
-                elif child['f_val'] > node['F_val']:
-                    next_F = child['f_val'] if not next_F else min(next_F, child['f_val'])
+                elif child_f > node['F_val']:
+                    next_F = child_f if not next_F else min(next_F, child_f)
         else:
             children = self.generate_child_nodes(node)
             self.osf_table[table_key] = copy.deepcopy(children)
             for child in children:
-                if child['f_val'] == node['F_val']:
+                child_f = child['g_val'] + child['h_val']
+                if child_f == node['F_val']:
                     children_with_F.append(child)
 
-                elif child['f_val'] > node['F_val']:
-                    next_F = child['f_val'] if not next_F else min(next_F, child['f_val'])            
+                elif child_f > node['F_val']:
+                    next_F = child_f if not next_F else min(next_F, child_f)            
 
         return children_with_F, next_F
 

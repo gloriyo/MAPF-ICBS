@@ -12,6 +12,8 @@ from a_star_class import A_Star
 
 from pea_star_class import PEA_Star
 
+from epea_star_class import EPEA_Star
+
 import math
 import copy
 
@@ -554,10 +556,13 @@ class ICBS_Solver(object):
         else:
             splitter = standard_splitting
 
-        AStar = PEA_Star
+        AStar = EPEA_Star
 
         if a_star_version == "a_star":
             AStar = A_Star
+        if a_star_version == "pea_star":
+            AStar = PEA_Star
+        
         #     # low-level solver
         #     self.ll_solver = a_star
         # else:
