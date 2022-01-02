@@ -335,21 +335,35 @@ def bypass_found(curr_cost, new_cost, curr_collisions_num, new_collisions_num):
 
 def should_merge(collision, p, N=0):
     # aSH
-    CM = 0
+    # CM = 0
+
+    a1 = collision['a1']
+    a2 = collision['a2']
+
+    if a1 > a2:
+        a1, a2 = a2, a1
+    assert a1 < a2
+    p['agent_collisions'][a1][a2] += 1
+
+    if p['agent_collisions'][a1][a2] > N:
+        return True
+
     ma1 = collision['ma1']
     ma2 = collision['ma2']
     
     # check it is same meta-agent
-    # assert ma1 != ma2
+    assert ma1 != ma2
 
-    for ai in ma1:
-        for aj in ma2:
-            if ai > aj:
-                ai, aj = aj, ai
-            CM += p['agent_collisions'][ai][aj]
-    if CM > N:
-        print('> Merge meta-agents {}, {} into one meta-agent'.format(ma1, ma2))
-        return True
+    assert not (a2 in ma1 or a1 in ma2)
+
+    # for ai in ma1:
+    #     for aj in ma2:
+    #         if ai > aj:
+    #             ai, aj = aj, ai
+    #         CM += p['agent_collisions'][ai][aj]
+    # if CM > N:
+    #     print('> Merge meta-agents {}, {} into one meta-agent'.format(ma1, ma2))
+    #     return True
     return False
 
 
@@ -781,21 +795,28 @@ class ICBS_Solver(object):
             assert not bypass_successful
 
             # MA-CBS
-            if should_merge(collision,p, 7):
+            if should_merge(collision, p, 7):
                 print('> Merge meta-agents into a new')
                 # returns meta_agent, ma_list
                 meta_agent, updated_ma_list = self.merge_agents(collision, p['ma_list'])
 
+
+                # updated constraints
+                updated_constraints = copy.deepcopy(p['constraints'])
+                for c in updated_constraints:
+                    if c['meta_agent'].issubset(meta_agent):
+                        c['meta_agent'] = meta_agent
+
                 print('Sending newly merged meta_agent {} to A* '.format(meta_agent))
-                print('\twith constraints ', p['constraints'])
+                print('\twith constraints ', updated_constraints)
 
                 for a in meta_agent:
-                    print (q['paths'][a])
+                    print (p['paths'][a])
 
 
                 # Update paths
                 # meta_agent_paths = self.ll_solver(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent),p['constraints'])
-                ma_astar = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent),p['constraints'])
+                ma_astar = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent), updated_constraints)
                 ma_paths = ma_astar.find_paths()
 
 
@@ -823,7 +844,7 @@ class ICBS_Solver(object):
                     #     print (updated_paths[a])
 
                     # Update collisions, cost
-                    updated_node = generate_child(p['constraints'], updated_paths, p['agent_collisions'], updated_ma_list) 
+                    updated_node = generate_child(updated_constraints, updated_paths, p['agent_collisions'], updated_ma_list) 
 
 
                     # print('agents {}, {} merged into agent {}'.format(collision['a1'], a2, meta_agent))

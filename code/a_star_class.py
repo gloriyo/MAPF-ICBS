@@ -6,7 +6,8 @@ import copy
 import collections
 
 def move(loc, dir):
-    directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
+    # directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
+    directions = [(0, 0), (0, -1), (1, 0), (0, 1), (-1, 0)]
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
 
@@ -29,7 +30,7 @@ def compute_heuristics(my_map, goal):
     closed_list[goal] = root
     while len(open_list) > 0:
         (cost, loc, curr) = heapq.heappop(open_list)
-        for dir in range(4):
+        for dir in range(1,5):
             child_loc = move(loc, dir)
             child_cost = cost + 1
             if child_loc[0] < 0 or child_loc[0] >= len(my_map) \
@@ -136,12 +137,16 @@ class A_Star(object):
     def push_node(self, node):
 
         f_value = node['g_val'] + node['h_val']
+        paths_left = node['reached_goal'].count(False)
+        
+        # heapq.heappush(self.open_list, (f_value, node['g_val'], node['h_val'], paths_left, node['loc'], self.num_generated, node))
         heapq.heappush(self.open_list, (f_value, node['h_val'], node['loc'], self.num_generated, node))
-        # heapq.heappush(self.open_list, (f_value, node['h_val'], node['loc'], node))
         self.num_generated += 1
         
     def pop_node(self):
-        _, _, _, id, curr = heapq.heappop(self.open_list)
+        _,_,_,_,_, id, curr = heapq.heappop(self.open_list)
+
+        # print(curr['h_val'])
         self.num_expanded += 1
         return curr
 
@@ -169,7 +174,7 @@ class A_Star(object):
                 t_constraint.append(constraint)
                 constraint_table[timestep] = t_constraint
             # and negative (external) constraint for agent
-            elif not constraint['positive'] and (constraint['agent'] == agent or agent in constraint['meta_agent']):
+            elif not constraint['positive'] and constraint['agent'] == agent:
                 # constraint_table[timestep].append(constraint)
                 t_constraint.append(constraint)
                 constraint_table[timestep] = t_constraint
@@ -208,7 +213,7 @@ class A_Star(object):
                 if len(constraint['loc']) == 1:
                     # positive constraint
                     if constraint['positive'] and next_loc != constraint['loc'][0]:
-                        print("time {} positive constraint : {}".format(timestep, constraint))
+                        # print("time {} positive constraint : {}".format(timestep, constraint))
                         return constraint
                     # negative constraint
                     elif not constraint['positive'] and next_loc == constraint['loc'][0]:
@@ -217,7 +222,7 @@ class A_Star(object):
                 # edge constraint
                 else:
                     if constraint['positive'] and constraint['loc'] != [curr_loc, next_loc]:
-                        print("time {} positive constraint : {}".format(timestep, constraint))
+                        # print("time {} positive constraint : {}".format(timestep, constraint))
                         return constraint
                     if not constraint['positive'] and constraint['loc'] == [curr_loc, next_loc]:
                         # print("time {} negative constraint : {}".format(timestep, constraint))
@@ -225,6 +230,30 @@ class A_Star(object):
 
         return None
 
+    # returns whether an agent at goal node at current timestep will violate a constraint in next timesteps
+    def future_constraint_violated(self, curr_loc, timestep, max_timestep, c_table_agent, agent):
+
+        for t in range(timestep+1, max_timestep+1):
+            if t not in c_table_agent:
+                continue
+
+            for constraint in c_table_agent[t]:
+        
+                if agent == constraint['agent']:
+                    # vertex constraint
+                    if len(constraint['loc']) == 1:
+                        # positive constraint
+                        if constraint['positive'] and curr_loc != constraint['loc'][0]:
+                            # print("future time {} positive constraint : {}".format(t, constraint))
+                            return True
+                        # negative constraint
+                        elif not constraint['positive'] and curr_loc == constraint['loc'][0]:
+                            # print("time {} negative constraint : {}".format(timestep, constraint))
+                            # print("future time {} negative constraint : {}".format(t, constraint))
+                            return True
+
+
+        return False
 
             
     def generate_child_nodes(self, curr):
@@ -297,15 +326,27 @@ class A_Star(object):
 
 
             reached_goal = [False for i in range(len(self.agents))]
-            for i, a in enumerate(self.agents):
-                # print(child_loc[i], goal_loc[i])
-                # print(max_constraints[i], curr['timestep']+1)
+            # for i, a in enumerate(self.agents):
+            #     # print(child_loc[i], goal_loc[i])
+            #     # print(max_constraints[i], curr['timestep']+1)
                 
-                if child_loc[i] == self.goals[i] and (curr['timestep']+1 > self.max_constraints[i]):
-                    # print("agent ", a, 'has reached_goal at timestep ', curr['timestep'] + 1)
-                    # print (self.max_constraints[i])
-                    reached_goal[i] = True
+            #     if child_loc[i] == self.goals[i] and (curr['timestep']+1 > self.max_constraints[i]):
+            #         # print("agent ", a, 'has reached_goal at timestep ', curr['timestep'] + 1)
+            #         # print (self.max_constraints[i])
+            #         reached_goal[i] = True
 
+            for i, a in enumerate(self.agents):
+                
+                if not reached_goal[i] and child_loc[i] == self.goals[i]:
+
+                    if curr['timestep']+1 <= self.max_constraints[i]:
+                        if not self.future_constraint_violated(child_loc[i], curr['timestep']+1, self.max_constraints[i] ,self.c_table[i], self.agents[i]):
+                    # print("agent ", a, 'has found solution at timestep ', curr['timestep'] + 1)
+                    # print ('MAX CONSTRIANT:', self.max_constraints[i])
+                            reached_goal[i] = True
+                            # self.max_constraints[i] differs for each node
+                    else:
+                        reached_goal[i] = True
 
 
             child = {'loc': child_loc,
@@ -343,16 +384,16 @@ class A_Star(object):
 
 
 
-    # def compare_nodes(self, n1, n2):
-    #     """Return true is n1 is better than n2."""
+    def compare_nodes(self, n1, n2):
+        """Return true is n1 is better than n2."""
 
-    #     # print(n1['g_val'] + n1['h_val'])
-    #     # print(n2['g_val'] + n2['h_val'])
+        # print(n1['g_val'] + n1['h_val'])
+        # print(n2['g_val'] + n2['h_val'])
 
-    #     assert isinstance(n1['g_val'] + n1['h_val'], int)
-    #     assert isinstance(n2['g_val'] + n2['h_val'], int)
+        assert isinstance(n1['g_val'] + n1['h_val'], int)
+        assert isinstance(n2['g_val'] + n2['h_val'], int)
 
-    #     return n1['g_val'] + n1['h_val'] < n2['g_val'] + n2['h_val']
+        return n1['g_val'] + n1['h_val'] < n2['g_val'] + n2['h_val']
 
 
 
@@ -394,9 +435,11 @@ class A_Star(object):
                     if not self.future_constraint_violated(root['loc'][i], root['timestep'], self.max_constraints[i] ,self.c_table[i], self.agents[i]):
                         root['reached_goal'][i] = True
 
+                        self.max_constraints[i] = 0
+
 
         self.push_node(root)
-        self.closed_list[(tuple(root['loc']),root['timestep'])] = root
+        self.closed_list[(tuple(root['loc']),root['timestep'])] = [root]
 
         while len(self.open_list) > 0:
 
@@ -427,12 +470,26 @@ class A_Star(object):
                 #     # print('bye child ',child['loc'])
                 #     self.closed_list[(tuple(child['loc']),child['timestep'])] = child
                 #     self.push_node(child)
-                if (tuple(child['loc']),child['timestep']) not in self.closed_list:
-                    # existing_node = self.closed_list[(tuple(child['loc']),child['timestep'])]
-                    # if compare_nodes(child, existing_node):
-                    self.closed_list[(tuple(child['loc']),child['timestep'])] = child
+
+                if (tuple(child['loc']),child['timestep']) in self.closed_list:
+                    existing = self.closed_list[(tuple(child['loc']),child['timestep'])]
+                    # if child not in existing_nodes:
+                    #     print("child not in existing closed list")
+                    if (child['g_val'] + child['h_val'] < existing['g_val'] + existing['h_val']) and (child['g_val'] < existing['g_val']) and child['reached_goal'].count(False) <= existing['reached_goal'].count(False):
+                        print("child is better than existing in closed list")
+                        self.closed_list[(tuple(child['loc']),child['timestep'])] = child
+                        self.push_node(child)
+                else:
                     # print('bye child ',child['loc'])
+                    self.closed_list[(tuple(child['loc']),child['timestep'])] = child
                     self.push_node(child)
+
+                # if (tuple(child['loc']),child['timestep']) not in self.closed_list:
+                #     # existing_node = self.closed_list[(tuple(child['loc']),child['timestep'])]
+                #     # if compare_nodes(child, existing_node):
+                #     self.closed_list[(tuple(child['loc']),child['timestep'])] = child
+                #     # print('bye child ',child['loc'])
+                #     self.push_node(child)
 
             # if (tuple(curr['loc']),curr['timestep']) not in self.closed_list:
             #     self.closed_list[(tuple(curr['loc']),curr['timestep'])] = curr

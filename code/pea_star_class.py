@@ -6,7 +6,8 @@ import copy
 import collections
 
 def move(loc, dir):
-    directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
+    # directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
+    directions = [(0, 0), (0, -1), (1, 0), (0, 1), (-1, 0)]
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
 
@@ -29,7 +30,7 @@ def compute_heuristics(my_map, goal):
     closed_list[goal] = root
     while len(open_list) > 0:
         (cost, loc, curr) = heapq.heappop(open_list)
-        for dir in range(4):
+        for dir in range(1,5):
             child_loc = move(loc, dir)
             child_cost = cost + 1
             if child_loc[0] < 0 or child_loc[0] >= len(my_map) \
@@ -178,20 +179,19 @@ class PEA_Star(object):
     def push_node(self, node):
 
         f_value = node['g_val'] + node['h_val']
-        heapq.heappush(self.open_list, (node['F_val'], f_value, node['h_val'], node['loc'], node['timestep'], self.num_generated, node))
+        # heapq.heappush(self.open_list, (node['F_val'], f_value, node['h_val'], node['loc'], node['timestep'], self.num_generated, node))
+        heapq.heappush(self.open_list, (node['F_val'], node['h_val'], node['loc'], -node['timestep'], self.num_generated, node))
         # print("Generate node {}".format(self.num_of_generated))
         self.num_generated += 1
 
     def pop_node(self):
-        _, _, _, _, _, id, curr = heapq.heappop(self.open_list)
+        _, _, _, _, id, curr = heapq.heappop(self.open_list)
         # print("> Expand node {} t=d={} with F_val {}".format(id, curr['timestep'], curr['F_val']))
         self.num_expanded += 1
         return curr
 
     # return a table that constains the list of constraints of a given agent for each time step. 
     def build_constraint_table(self, agent):
-        # constraint_table = {}
-        # constraint_table = [[] for i in range(3)]
         constraint_table = dict()
 
         if not self.constraints:
@@ -331,10 +331,10 @@ class PEA_Star(object):
         children = []
         # ma_dirs = product(list(range(5)), repeat=len(self.agents)) # directions for move() for each agent: 0, 1, 2, 3, 4
         
-        dirs_product_lists = [] # contains lists with directions for move() for each agent: 0 (down), 1 (right), 2 (up), 3 (left), 4 (stay)
+        dirs_product_lists = [] # contains lists with directions for move() for each agent: 1 (down), 2 (right), 3 (up), 4 (left), 0 (stay)
         for i, a in enumerate(self.agents):
             if curr['reached_goal'][i] == True:
-                dirs_product_lists.append([4]) # stay in current location
+                dirs_product_lists.append([0]) # stay in current location
             else:
                 dirs_product_lists.append(list(range(5))) # try all 0-4 directions
 
@@ -423,7 +423,7 @@ class PEA_Star(object):
                 if not reached_goal[i] and child_loc[i] == self.goals[i]:
 
 
-                    if not (curr['timestep']+1 > self.max_constraints[i]):
+                    if curr['timestep']+1 <= self.max_constraints[i]:
                         if not self.future_constraint_violated(child_loc[i], curr['timestep']+1, self.max_constraints[i] ,self.c_table[i], self.agents[i]):
                     # print("agent ", a, 'has found solution at timestep ', curr['timestep'] + 1)
                     # print ('MAX CONSTRIANT:', self.max_constraints[i])
