@@ -1,8 +1,17 @@
 import time as timer
 import heapq
 import random
-from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
+# from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
 
+
+from a_star import a_star, get_sum_of_cost, compute_heuristics, get_location
+# from pea_star import pea_star
+
+from a_star_class import A_Star
+
+from pea_star_class import PEA_Star
+
+PEA_STAR = PEA_Star
 
 def detect_collision(path1, path2):
     ##############################
@@ -163,6 +172,7 @@ class CBSSolver(object):
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
         """
 
+        self.ll_solver = a_star
         self.my_map = my_map
         self.starts = starts
         self.goals = goals
@@ -186,14 +196,16 @@ class CBSSolver(object):
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        # print("Expand node {}".format(id))
+        print("Expand node {}".format(id))
         self.num_of_expanded += 1
         return node
 
-    def find_solution(self, disjoint=True):
+
+    def find_solution(self, disjoint, a_star_version):
         """ Finds paths for all agents from their start locations to their goal locations
 
-        disjoint    - use disjoint splitting or not
+        disjoint         - use disjoint splitting or not
+        a_star_version   - version of A*; "a_star" or "pea_star"
         """
 
         self.start_time = timer.time()
@@ -202,8 +214,20 @@ class CBSSolver(object):
             splitter = disjoint_splitting
         else:
             splitter = standard_splitting
+
         print("USING: ", splitter)
 
+        AStar = PEA_STAR
+
+        if a_star_version == "a_star":
+            # AStar = a_star # not a class yet
+            AStar = A_Star
+        # if ll_solver == "a_star":
+        #     # low-level solver
+        #     self.ll_solver = a_star
+        # else:
+        #     self.ll_solver = pea_star
+        
 
         # Generate the root node
         # constraints   - list of constraints
@@ -214,12 +238,15 @@ class CBSSolver(object):
                 'constraints': [],
                 'paths': [],
                 'collisions': []}
+
         for i in range(self.num_of_agents):  # Find initial path for each agent
-            path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],i, root['constraints'])
+            astar = AStar(self.my_map, self.starts, self.goals, self.heuristics,i, root['constraints'])
+            path = astar.find_paths()
+
             # path = ma_star(self.my_map, self.starts, self.goals, self.heuristics,[i], root['constraints'])
             if path is None:
                 raise BaseException('No solutions')
-            root['paths'].append(path)
+            root['paths'].append(path[0])
 
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
@@ -264,20 +291,22 @@ class CBSSolver(object):
                     q['paths'].append(pa)
                 
                 ai = constraint['agent']
-                path = a_star(self.my_map,self.starts[ai], self.goals[ai],self.heuristics[ai],ai,q['constraints'])
+                astar = AStar(self.my_map,self.starts, self.goals,self.heuristics,ai,q['constraints'])
+                path = astar.find_paths()
 
                 if path is not None:
-                    q['paths'][ai]= path
+                    q['paths'][ai]= path[0]
                     # task 4
                     continue_flag = False
                     if constraint['positive']:
                         vol = paths_violate_constraint(constraint,q['paths'])
                         for v in vol:
-                            path_v = a_star(self.my_map,self.starts[v], self.goals[v],self.heuristics[v],v,q['constraints'])
+                            astar_v = AStar(self.my_map,self.starts, self.goals,self.heuristics,v,q['constraints'])
+                            path_v = astar_v.find_paths()
                             if path_v  is None:
                                 continue_flag =True
                             else:
-                                q['paths'][v] = path_v
+                                q['paths'][v] = path_v[0]
                         if continue_flag:
                             continue
                     q['collisions'] = detect_collisions(q['paths'])

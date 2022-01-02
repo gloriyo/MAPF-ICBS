@@ -2,13 +2,26 @@ import time as timer
 import heapq
 import random
 # from single_agent_planner import compute_heuristics, a_star, get_location
-from multi_agent_planner import ma_star,get_sum_of_cost, compute_heuristics, get_location
-import math
+# from multi_agent_planner import ll_solver,get_sum_of_cost, compute_heuristics, get_location
+
+from a_star import a_star, get_sum_of_cost, compute_heuristics, get_location
+
+from a_star_class import A_Star
+
+# from pea_star import pea_star
+
+from pea_star_class import PEA_Star
+
 import math
 import copy
 
 import numpy
 
+PEA_STAR = PEA_Star
+'''
+   ## Reference to class
+'''
+######
 '''
 # Developer's cNOTE regarding Python's mutable default arguments:
 #       The responsibiliy of preserving mutable values of passed arguments and 
@@ -16,6 +29,22 @@ import numpy
 #       is the responsiblity of the function being called upon
 #       PEP 505 - None-aware operators: https://www.python.org/dev/peps/pep-0505/#syntax-and-semantics
 '''
+
+def generate_child(constraints, paths, agent_collisions, ma_list):
+
+    assert isinstance(ma_list , list)
+
+    collisions = detect_collisions(paths, ma_list)
+    cost = get_sum_of_cost(paths)
+    child_node = {
+        'cost':cost,
+        'constraints': copy.deepcopy(constraints),
+        'paths': copy.deepcopy(paths), # {0: {'path':[..path...]}, ... , n: {'path':[..path...]} # not sure if other keys are needed
+        'ma_collisions': collisions,
+        'agent_collisions':copy.deepcopy(agent_collisions), # matrix of collisions in history between pairs of simple agents
+        'ma_list': copy.deepcopy(ma_list) # [{a1,a2}, ... ]
+    }
+    return child_node
 
 def detect_collision(path1, path2, pos=None):
     ##############################
@@ -304,6 +333,25 @@ def bypass_found(curr_cost, new_cost, curr_collisions_num, new_collisions_num):
         return True
     return False
 
+def should_merge(collision, p, N=0):
+    # aSH
+    CM = 0
+    ma1 = collision['ma1']
+    ma2 = collision['ma2']
+    
+    # check it is same meta-agent
+    # assert ma1 != ma2
+
+    for ai in ma1:
+        for aj in ma2:
+            if ai > aj:
+                ai, aj = aj, ai
+            CM += p['agent_collisions'][ai][aj]
+    if CM > N:
+        print('> Merge meta-agents {}, {} into one meta-agent'.format(ma1, ma2))
+        return True
+    return False
+
 
 class ICBS_Solver(object):
     """The high-level search of CBS."""
@@ -313,6 +361,8 @@ class ICBS_Solver(object):
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
         """
+
+        # self.ll_solver = a_star
 
         self.my_map = my_map
         self.starts = starts
@@ -345,10 +395,142 @@ class ICBS_Solver(object):
     def empty_tree(self):
         self.open_list.clear()
 
-    def find_solution(self, disjoint):
+    # algorithm for detecting cardinality
+    # as 'non-cardinal' or 'semi-cardinal' or 'cardinal'
+    # using standard splitting
+    def detect_cardinal_conflict(self, AStar, p, collision):
+        cardinality = 'non-cardinal'
+
+        # temporary constraints (standard splitting) for detecting cardinal collision purposes
+        temp_constraints = standard_splitting(collision)
+
+
+        ma1 = collision['ma1'] #agent a1
+
+        # print('Sending ma1 in collision {} to A* '.format(ma1))
+
+        assert temp_constraints[0]['meta_agent'] == ma1
+        path1_constraints = combined_constraints(p['constraints'], temp_constraints[0])
+        # alt_paths1 = self.ll_solver(self.my_map,self.starts, self.goals,self.heuristics,list(ma1),path1_constraints)
+        astar_ma1 = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(ma1),path1_constraints)
+        alt_paths1 = astar_ma1.find_paths()
+
+        # get current paths of meta-agent
+        curr_paths = []
+        for a1 in ma1:
+
+            not_nested_list = p['paths'][a1]
+            assert any(isinstance(i, list) for i in not_nested_list) == False
+
+
+            curr_paths.append(p['paths'][a1])
+            
+
+        # print(curr_paths)
+        # print(alt_paths1)
+
+        # get costs for the meta agent
+        curr_cost = get_sum_of_cost(curr_paths)
+        
+        alt_cost = 0 # write inline if later
+        if alt_paths1:
+            alt_cost = get_sum_of_cost(alt_paths1)
+
+        # print('\t oldcost:{} newcost:{}'.format(curr_cost, alt_cost))
+
+        if not alt_paths1 or alt_cost > curr_cost:
+            cardinality = 'semi-cardinal'
+            
+            print('alt_path1 takes longer or is empty. at least semi-cardinal.')
+            
+            
+        ma2 = collision['ma2'] #agent a2
+
+
+        # print('Sending ma2 in collision {} to A* '.format(ma2))
+
+
+        assert temp_constraints[1]['meta_agent'] == ma2
+        path2_constraints = combined_constraints(p['constraints'], temp_constraints[1])
+        # alt_paths2 = self.ll_solver(self.my_map,self.starts, self.goals,self.heuristics,list(ma2),path2_constraints)
+        astar_ma2 = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(ma2),path2_constraints)
+        alt_paths2 = astar_ma2.find_paths()
+        
+
+
+        # for i in range(len(ma2)):
+        #     if len(alt_path1[i])> len(p['paths'][ma2[i]]):
+        #         bigger =True
+        # if not alt_path2 or bigger:
+        curr_paths = []
+        for a2 in ma2:
+
+
+
+            
+            not_nested_list = p['paths'][a2]
+            assert any(isinstance(i, list) for i in not_nested_list) == False
+
+
+            curr_paths.append(p['paths'][a2])
+            
+        # print(curr_paths)
+        # print(alt_paths2)
+
+
+        # get costs for the meta agent
+        curr_cost = get_sum_of_cost(curr_paths)
+        
+        alt_cost = 0 # write inline if later
+        if alt_paths2:
+            alt_cost = get_sum_of_cost(alt_paths2)
+
+        # print('\t oldcost:{} newcost:{}'.format(curr_cost, alt_cost))
+
+        if not alt_paths2 or alt_cost > curr_cost:
+            # cardinality = 'semi-cardinal'
+            if cardinality == 'semi-cardinal':
+                cardinality = 'cardinal'
+                
+                # print('identified cardinal conflict')
+
+            else:
+                cardinality = 'semi-cardinal'
+                
+                # print('alt_path2 takes longer or is empty. semi-cardinal.')   
+        # print('cardinality: ', cardinality)
+            
+        return cardinality        
+
+    # returns new merged agents (the meta-agent), and updated list of ma_list
+    def merge_agents(self, collision, ma_list):
+
+        # constraints = standard_splitting(collision)
+        
+        # collision simple agents and their meta-agent group
+        a1 = collision['a1']
+        a2 = collision['a2']
+        ma1 = collision['ma1']
+        ma2 = collision['ma2']
+
+        meta_agent = set.union(ma1, ma2)
+
+        print('new merged meta_agent ', meta_agent)
+
+        assert meta_agent not in ma_list
+
+        ma_list.remove(ma1)
+        ma_list.remove(ma2)
+        ma_list.append(meta_agent)
+
+        return meta_agent, ma_list
+
+
+    def find_solution(self, disjoint, a_star_version):
         """ Finds paths for all agents from their start locations to their goal locations
 
-        disjoint    - use disjoint splitting or not
+        disjoint         - use disjoint splitting or not
+        a_star_version   - version of A*; "a_star" or "pea_star"
         """
 
         self.start_time = timer.time()
@@ -357,7 +539,17 @@ class ICBS_Solver(object):
             splitter = disjoint_splitting
         else:
             splitter = standard_splitting
-        print("USING: ", splitter)
+
+        AStar = PEA_Star
+
+        if a_star_version == "a_star":
+            AStar = A_Star
+        #     # low-level solver
+        #     self.ll_solver = a_star
+        # else:
+        #     self.ll_solver = PEA_Star
+        
+        print("USING: ", splitter , a_star_version)
 
         # Generate the root node
         # constraints   - list of constraints
@@ -374,8 +566,11 @@ class ICBS_Solver(object):
         }       
         
         for i in range(self.num_of_agents):  # Find initial path for each agent
-            path = ma_star(self.my_map, self.starts, self.goals, self.heuristics,
-                          [i], root['constraints'])
+            # path = self.ll_solver(self.my_map, self.starts, self.goals, self.heuristics, [i], root['constraints'])
+            astar = AStar(self.my_map, self.starts, self.goals, self.heuristics, [i], root['constraints'])
+            path = astar.find_paths()
+
+
             if path is None:
                 raise BaseException('No solutions')
             root['ma_list'].append({i})
@@ -389,179 +584,6 @@ class ICBS_Solver(object):
         self.push_node(root)
 
 
-        ##############################
-        # Task 3.3: High-Level Search
-        #           Repeat the following as long as the open list is not empty:
-        #             1. Get the next node from the open list (you can use self.pop_node()
-        #             2. If this node has no collision, return solution
-        #             3. Otherwise, choose the first collision and convert to ap['ma_collisions'].index(chosen_collision)list of constraints (using your
-        #                standard_splitting function). Add a new child node to your open list for each constraint
-        #           Ensure to create a copy of any objects that your child nodes might inherit
-
-
-        # algorithm for detecting cardinality
-        # as 'non-cardinal' or 'semi-cardinal' or 'cardinal'
-        # using standard splitting
-        def detect_cardinal_conflict(self, p, collision):
-            cardinality = 'non-cardinal'
-
-            # temporary constraints (standard splitting) for detecting cardinal collision purposes
-            temp_constraints = standard_splitting(collision)
-
-
-            ma1 = collision['ma1'] #agent a1
-
-            # print('Sending ma1 in collision {} to A* '.format(ma1))
-
-            assert temp_constraints[0]['meta_agent'] == ma1
-            path1_constraints = combined_constraints(p['constraints'], temp_constraints[0])
-            alt_paths1 = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(ma1),path1_constraints)
-
-            # get current paths of meta-agent
-            curr_paths = []
-            for a1 in ma1:
-
-                not_nested_list = p['paths'][a1]
-                assert any(isinstance(i, list) for i in not_nested_list) == False
-
-
-                curr_paths.append(p['paths'][a1])
-                
-
-            # print(curr_paths)
-            # print(alt_paths1)
-
-            # get costs for the meta agent
-            curr_cost = get_sum_of_cost(curr_paths)
-            
-            alt_cost = 0 # write inline if later
-            if alt_paths1:
-                alt_cost = get_sum_of_cost(alt_paths1)
-
-            # print('\t oldcost:{} newcost:{}'.format(curr_cost, alt_cost))
-
-            if not alt_paths1 or alt_cost > curr_cost:
-                cardinality = 'semi-cardinal'
-                
-                print('alt_path1 takes longer or is empty. at least semi-cardinal.')
-                
-                
-            ma2 = collision['ma2'] #agent a2
-
-
-            # print('Sending ma2 in collision {} to A* '.format(ma2))
-
-
-            assert temp_constraints[1]['meta_agent'] == ma2
-            path2_constraints = combined_constraints(p['constraints'], temp_constraints[1])
-            alt_paths2 = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(ma2),path2_constraints)
-
-            
-
-
-            # for i in range(len(ma2)):
-            #     if len(alt_path1[i])> len(p['paths'][ma2[i]]):
-            #         bigger =True
-            # if not alt_path2 or bigger:
-            curr_paths = []
-            for a2 in ma2:
-
-
-
-                
-                not_nested_list = p['paths'][a2]
-                assert any(isinstance(i, list) for i in not_nested_list) == False
-
-
-                curr_paths.append(p['paths'][a2])
-                
-            # print(curr_paths)
-            # print(alt_paths2)
-
-
-            # get costs for the meta agent
-            curr_cost = get_sum_of_cost(curr_paths)
-            
-            alt_cost = 0 # write inline if later
-            if alt_paths2:
-                alt_cost = get_sum_of_cost(alt_paths2)
-
-            # print('\t oldcost:{} newcost:{}'.format(curr_cost, alt_cost))
-
-            if not alt_paths2 or alt_cost > curr_cost:
-                # cardinality = 'semi-cardinal'
-                if cardinality == 'semi-cardinal':
-                    cardinality = 'cardinal'
-                    
-                    # print('identified cardinal conflict')
-
-                else:
-                    cardinality = 'semi-cardinal'
-                    
-                    # print('alt_path2 takes longer or is empty. semi-cardinal.')   
-            # print('cardinality: ', cardinality)
-                
-            return cardinality        
-
-
-        def should_merge(collision, p, N=0):
-            # aSH
-            CM = 0
-            ma1 = collision['ma1']
-            ma2 = collision['ma2']
-            
-            # check it is same meta-agent
-            # assert ma1 != ma2
-
-            for ai in ma1:
-                for aj in ma2:
-                    if ai > aj:
-                        ai, aj = aj, ai
-                    CM += p['agent_collisions'][ai][aj]
-            if CM > N:
-                print('> Merge meta-agents {}, {} into one meta-agent'.format(ma1, ma2))
-                return True
-            return False
-
-            
-        def generate_child(constraints, paths, agent_collisions, ma_list):
-
-            assert isinstance(ma_list , list)
-
-            collisions = detect_collisions(paths, ma_list)
-            cost = get_sum_of_cost(paths)
-            child_node = {
-                'cost':cost,
-                'constraints': copy.deepcopy(constraints),
-                'paths': copy.deepcopy(paths), # {0: {'path':[..path...]}, ... , n: {'path':[..path...]} # not sure if other keys are needed
-                'ma_collisions': collisions,
-                'agent_collisions':copy.deepcopy(agent_collisions), # matrix of collisions in history between pairs of simple agents
-                'ma_list': copy.deepcopy(ma_list) # [{a1,a2}, ... ]
-            }
-            return child_node
-
-        # returns new merged agents (the meta-agent), and updated list of ma_list
-        def merge_agents(self, collision, ma_list):
-
-            # constraints = standard_splitting(collision)
-            
-            # collision simple agents and their meta-agent group
-            a1 = collision['a1']
-            a2 = collision['a2']
-            ma1 = collision['ma1']
-            ma2 = collision['ma2']
-
-            meta_agent = set.union(ma1, ma2)
-
-            print('new merged meta_agent ', meta_agent)
-
-            assert meta_agent not in ma_list
-
-            ma_list.remove(ma1)
-            ma_list.remove(ma2)
-            ma_list.append(meta_agent)
-
-            return meta_agent, ma_list
 
         # ATTENTION: THE CBS LOOOOOOOOOOOOP ============@#￥#%#@￥@#%##@￥======  STARTS ---#￥%------   HERE  ---- @
         # normal CBS with disjoint and standard splitting
@@ -595,7 +617,7 @@ class ICBS_Solver(object):
 
                 print(collision)
 
-                collision_type = detect_cardinal_conflict(self, p, collision)
+                collision_type = self.detect_cardinal_conflict(AStar, p, collision)
                 if collision_type == 'cardinal' and new_constraints is None:    
                     print('Detected cardinal collision. Chose it.')
                     print(collision)
@@ -606,7 +628,7 @@ class ICBS_Solver(object):
 
             else: # no cardinal collisions found
                 for collision in p['ma_collisions']:
-                    collision_type = detect_cardinal_conflict(self, p, collision)
+                    collision_type = self.detect_cardinal_conflict(AStar, p, collision)
                     if collision_type == 'semi-cardinal':    
                         
                         print('Detected semi-cardinal collision. Chose it.')
@@ -631,11 +653,6 @@ class ICBS_Solver(object):
             p['agent_collisions'][chosen_a1][chosen_a2] += 1
 
 
-            # implementing bypassing conflicts
-            # if collision_type != 'cardinal' and find_bypass(self,p, chosen_collision, collision_type):
-            #         continue
-
-
             new_constraints = splitter(chosen_collision)
 
             print('OLD CONSTS:')
@@ -650,21 +667,6 @@ class ICBS_Solver(object):
             bypass_successful = False
             for constraint in new_constraints:
                 print(constraint)
-
-                # q = {'cost':0,
-                #     'constraints': [constraint],
-                #     'paths':[],
-                #     'ma_collisions':[],
-                #     'discarded_agents': []
-                # }
-                # for c in p['constraints']:
-                #     if c not in q['constraints']:
-                #         q['constraints'].append(c)
-                # for pa in p['paths']:
-                #     q['paths'].append(pa)
-                
-                # for da in p['discarded_agents']:
-                #     q['discarded_agents'].append(da)
                 
                 updated_constraints = combined_constraints(p['constraints'], constraint)
                 q = generate_child(updated_constraints, p['paths'], p['agent_collisions'], p['ma_list'])
@@ -682,32 +684,29 @@ class ICBS_Solver(object):
                     print (q['paths'][a])
 
 
-                # skip this if constraint is positive
-                path = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(ma),q['constraints']) 
+                # path = self.ll_solver(self.my_map,self.starts, self.goals,self.heuristics,list(ma),q['constraints']) 
+                astar = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(ma),q['constraints'])
+                paths = astar.find_paths()
 
-                if constraint['positive']:
-                    assert path
-
-                if path is not None:
+                if paths is not None:
+                    
+                    for i in range(len(paths)):
+                                print (paths[i])
                     for i, agent in enumerate(ma):
 
-                        not_nested_list = path[i]
+                        
+
+                        not_nested_list = paths[i]
                         assert any(isinstance(j, list) for j in not_nested_list) == False
 
 
-                        q['paths'][agent] = path[i]
+                        q['paths'][agent] = paths[i]
 
-
-
-                    # task 4
-                    # continue_flag = False
                     if constraint['positive']:
                         # vol = paths_violate_constraint(constraint,q['paths'])
                         violating_ma_list = meta_agents_violate_constraint(constraint, q['paths'], q['ma_list'])
                         no_solution = False
                         for v_ma in violating_ma_list:
-                            # if type(v_ma) == int:
-                            #     v_ma = {v_ma}
                             
                             print('\nSending meta-agent violating constraint {} to A* '.format(v_ma))
                             print('\twith constraints ', q['constraints'])
@@ -717,20 +716,28 @@ class ICBS_Solver(object):
 
 
                             v_ma_list = list(v_ma) # should use same list for all uses
-                            path_v_ma = ma_star(self.my_map,self.starts,self.goals,self.heuristics,v_ma_list,q['constraints'])
-                            
+                            # path_v_ma = self.ll_solver(self.my_map,self.starts,self.goals,self.heuristics,v_ma_list,q['constraints'])
+                            astar_v_ma = AStar(self.my_map,self.starts,self.goals,self.heuristics,v_ma_list,q['constraints'])
+                            paths_v_ma = astar_v_ma.find_paths()
+
+
+
                             # replace paths of meta-agent with new paths found
-                            if path_v_ma is not None:
+                            if paths_v_ma is not None:
+
+                                for i in range(len(v_ma_list)):
+                                    print (paths_v_ma[i])
+
                                 for i, agent in enumerate(v_ma_list):
 
-                                    assert path_v_ma[i] is not None
-                                    print(path_v_ma[i])
+                                    assert paths_v_ma[i] is not None
+                                    print(paths_v_ma[i])
 
-                                    not_nested_list = path_v_ma[i]
+                                    not_nested_list = paths_v_ma[i]
                                     assert any(isinstance(j, list) for j in not_nested_list) == False
 
 
-                                    q['paths'][agent] = path_v_ma[i]
+                                    q['paths'][agent] = paths_v_ma[i]
                             else:
                                 print("no solution, moving on to next constraint")   
                                 no_solution = True
@@ -777,7 +784,7 @@ class ICBS_Solver(object):
             if should_merge(collision,p, 7):
                 print('> Merge meta-agents into a new')
                 # returns meta_agent, ma_list
-                meta_agent, updated_ma_list = merge_agents(self, collision, p['ma_list'])
+                meta_agent, updated_ma_list = self.merge_agents(collision, p['ma_list'])
 
                 print('Sending newly merged meta_agent {} to A* '.format(meta_agent))
                 print('\twith constraints ', p['constraints'])
@@ -787,10 +794,16 @@ class ICBS_Solver(object):
 
 
                 # Update paths
-                meta_agent_paths = ma_star(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent),p['constraints'])
+                # meta_agent_paths = self.ll_solver(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent),p['constraints'])
+                ma_astar = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent),p['constraints'])
+                ma_paths = ma_astar.find_paths()
+
 
                 # if can be 
-                if meta_agent_paths:
+                if ma_paths:
+
+                    for i in range(len(meta_agent)):
+                        print (ma_paths[i])
                                         
                     updated_paths = copy.deepcopy(p['paths'])
 
@@ -798,12 +811,16 @@ class ICBS_Solver(object):
                         
                         assert isinstance(i, int)
 
-                        not_nested_list = meta_agent_paths[i]
+                        not_nested_list = ma_paths[i]
                         assert any(isinstance(j, list) for j in not_nested_list) == False
 
 
 
-                        updated_paths[agent] = meta_agent_paths[i]
+                        updated_paths[agent] = ma_paths[i]
+
+
+                    # for a in meta_agent:
+                    #     print (updated_paths[a])
 
                     # Update collisions, cost
                     updated_node = generate_child(p['constraints'], updated_paths, p['agent_collisions'], updated_ma_list) 
@@ -812,9 +829,6 @@ class ICBS_Solver(object):
                     # print('agents {}, {} merged into agent {}'.format(collision['a1'], a2, meta_agent))
 
                     # Merge & restart
-                    # if merge_restart():
-                        # restart_search()
-
                     # restart with only updated node with merged agents
                     self.empty_tree()
 
