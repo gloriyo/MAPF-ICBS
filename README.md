@@ -3,7 +3,7 @@
 Improved CBS (ICBS) is an extension of the Conflict Based Search algorithm developed for the purpose of finding optimal paths for multiple agents on any given map without collisions. ICBS was presented as an extension of CBS at the IJCAI-15 Conference which incorporates several previously found improvements to CBS to accumulate their benefits.[^1] The algorithm has many practical applications, especially in the field of autonomous robotics. 
 
 ## About Our Project ##
-In our version of improved CBS, we include an additional improvement to ICBS pertaining to the method in which collision-based constraints are created. A promising, new method for CBS-based MAPF has emerged called *disjoint splitting* which was published in May of this year (2021).[^2] Our goal was to combine the established improvements of ICBS with the up-and-coming method of constraint generation. Please see <a href="#background"><strong>Background</strong></a> below or our more detailed [report](final_report.pdf) on the subject for more information.
+In our version of improved CBS, we include an additional improvement to ICBS regarding the method in which collision-based constraints are created. A promising, new method for CBS-based MAPF has emerged called *disjoint splitting* which was published in May of this year (2021).[^2] Our goal was to combine the established improvements of ICBS with the up-and-coming method of constraint generation. Please see <a href="#background"><strong>Background</strong></a> below or our more detailed [report](final_report.pdf) on the subject for more information.
 
 <!-- ![demo instance](code/demo/fig21.gif) -->
 <img src="code/demo/fig21.gif" alt="demo" width="600"/>
