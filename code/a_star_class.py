@@ -144,7 +144,7 @@ class A_Star(object):
         self.num_generated += 1
         
     def pop_node(self):
-        _,_,_,_,_, id, curr = heapq.heappop(self.open_list)
+        _,_,_, id, curr = heapq.heappop(self.open_list)
 
         # print(curr['h_val'])
         self.num_expanded += 1
