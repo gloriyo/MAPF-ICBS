@@ -117,7 +117,7 @@ If the conflict _C_ is not cardinal, there is a chance that the paths generated 
 
 #### Meta-Agents with Merge and Restart
 
-Although, CBS is typically much more efficient than if its lower-level counterpart A* were to search without high-level guidance, there are some instances where using CBS is less efficient. If collisions occur often in a pair, or a small group, of agents, it becomes more efficient for the lower-level algorithm to search their paths as a group of agents, called the *meta-agent*. In Meta-Agent CBS, frequently conflicting agents are merged into a new meta-agent if the number of collisions is above a threshold, *B*, for MA-CBS(*B\*).[^5]
+Although, CBS is typically much more efficient than if its lower-level counterpart A\* were to search without high-level guidance, there are some instances where using CBS is less efficient. If collisions occur often in a pair, or a small group, of agents, it becomes more efficient for the lower-level algorithm to search their paths as a group of agents, called the _meta-agent_. In Meta-Agent CBS, frequently conflicting agents are merged into a new meta-agent if the number of collisions is above a threshold, _B_, for MA-CBS(_B_).[^5]
 
 To prevent repeated merging of the highly conflicting agents elsewhere in the CT, when a merge occurs at node _N_, the current CT is discarded and the search restarts with node _N_ as the root node. This procedure is called _Merge and Restart_.[^1]
 
