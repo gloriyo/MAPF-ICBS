@@ -648,9 +648,6 @@ class CBSSolver(object):
                         if no_solution:
                             continue # move on to the next constraint
 
-                        # if continue_flag:
-                        #     continue
-                    print("no solution? should not be here...")  
                     q['ma_collisions'] = detect_collisions(q['paths'],q['ma_list'])
 
                     assert chosen_collision not in q['ma_collisions']
