@@ -53,7 +53,7 @@ def detect_collision(path1, path2, pos=None):
         pos = []
     t_range = max(len(path1),len(path2))
     for t in range(t_range):
-        loc_c1 =get_location(path1,t)
+        loc_c1 = get_location(path1,t)
         loc_c2 = get_location(path2,t)
         loc1 = get_location(path1,t+1)
         loc2 = get_location(path2,t+1)

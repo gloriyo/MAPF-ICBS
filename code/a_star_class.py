@@ -130,18 +130,14 @@ class A_Star(object):
 
 
     def push_node(self, node):
-
         f_value = node['g_val'] + node['h_val']
-        paths_left = node['reached_goal'].count(False)
-        
-        # heapq.heappush(self.open_list, (f_value, node['g_val'], node['h_val'], paths_left, node['loc'], self.num_generated, node))
+
         heapq.heappush(self.open_list, (f_value, node['h_val'], node['loc'], self.num_generated, node))
         self.num_generated += 1
         
     def pop_node(self):
         _,_,_, id, curr = heapq.heappop(self.open_list)
 
-        # print(curr['h_val'])
         self.num_expanded += 1
         return curr
 
@@ -153,9 +149,6 @@ class A_Star(object):
         if not self.constraints:
             return constraint_table
         for constraint in self.constraints:
-
-            # print(constraint)
-
             timestep = constraint['timestep']
 
             t_constraint = []
@@ -164,20 +157,16 @@ class A_Star(object):
 
             # positive constraint for agent
             if constraint['positive'] and constraint['agent'] == agent:
-                
-                # constraint_table[timestep].append(constraint)
                 t_constraint.append(constraint)
                 constraint_table[timestep] = t_constraint
             # and negative (external) constraint for agent
             elif not constraint['positive'] and constraint['agent'] == agent:
-                # constraint_table[timestep].append(constraint)
                 t_constraint.append(constraint)
                 constraint_table[timestep] = t_constraint
-                # enforce positive constraints from other agents (i.e. create neg constraint)
+            # enforce positive constraints from other agents (i.e. create neg constraint)
             elif constraint['positive']: 
                 neg_constraint = copy.deepcopy(constraint)
                 neg_constraint['agent'] = agent
-                # neg_constraint['meta_agent'] = meta_agent
                 # if edge collision
                 if len(constraint['loc']) == 2:
                     # switch traversal direction
@@ -185,7 +174,6 @@ class A_Star(object):
                     curr_loc = constraint['loc'][0]
                     neg_constraint['loc'] = [prev_loc, curr_loc]
                 neg_constraint['positive'] = False
-                # constraint_table[timestep].append(neg_constraint)
                 t_constraint.append(neg_constraint)
                 constraint_table[timestep] = t_constraint
         
@@ -344,8 +332,6 @@ class A_Star(object):
                     'reached_goal': copy.deepcopy(reached_goal)
                     } 
 
-            # print(child)
-
             children.append(child)
 
         return children
@@ -434,8 +420,6 @@ class A_Star(object):
 
                 if (tuple(child['loc']),child['timestep']) in self.closed_list:
                     existing = self.closed_list[(tuple(child['loc']),child['timestep'])]
-                    # if child not in existing_nodes:
-                    #     print("child not in existing closed list")
                     if (child['g_val'] + child['h_val'] < existing['g_val'] + existing['h_val']) and (child['g_val'] < existing['g_val']) and child['reached_goal'].count(False) <= existing['reached_goal'].count(False):
                         print("child is better than existing in closed list")
                         self.closed_list[(tuple(child['loc']),child['timestep'])] = child
