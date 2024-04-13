@@ -246,9 +246,7 @@ def compare_nodes(n1, n2):
 
 
 def generate_child_nodes(my_map, h_values, goal_loc, max_constraints, constraint_table, curr, meta_agent, node_i):
-    
     children = []
-    print("BABY MAKING")
     ma_dirs = product(list(range(5)), repeat=len(meta_agent)) # directions for move() for each agent: 0, 1, 2, 3, 4
     
     for dirs in ma_dirs: 
