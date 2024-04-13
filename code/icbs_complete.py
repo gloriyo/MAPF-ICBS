@@ -2,19 +2,12 @@ import time as timer
 import heapq
 import random
 # from single_agent_planner import compute_heuristics, a_star, get_location
-# from multi_agent_planner import ll_solver,get_sum_of_cost, compute_heuristics, get_location
+# from multi_agent_planner import ll_solver, get_sum_of_cost, compute_heuristics, get_location
 
-from a_star import a_star, get_sum_of_cost, compute_heuristics, get_location
-
-from a_star_class import A_Star
-
-# from pea_star import pea_star
-
+from a_star_class import A_Star, get_sum_of_cost, compute_heuristics, get_location
 from pea_star_class import PEA_Star
-
 from epea_star_class import EPEA_Star
 
-import math
 import copy
 
 import numpy
@@ -92,15 +85,7 @@ def detect_collisions(paths, ma_list, collisions=None):
             if detect_collision(paths[ai],paths[aj]) !=None:
                 position,t = detect_collision(paths[ai],paths[aj])
 
-                # # find meta-agent group for each agent
-                # ma_i = {ai}
-                # ma_j = {aj}
                 # find meta-agents of agents in collision 
-                # for ma in ma_list:
-                #     if ai in ma:
-                #         ma_i = ma
-                #     elif aj in ma:
-                #         ma_j = ma
                 assert isinstance(ma_list , list)
                 ma_i = get_ma_of_agent(ai, ma_list)
                 assert isinstance(ma_list , list)
@@ -261,9 +246,6 @@ def meta_agents_violate_constraint(constraint, paths, ma_list, violating_ma=None
         violating_ma = []
 
     for i in range(len(paths)):
-        # if i == constraint['agent']:
-        #     continue
-
         ma_i = get_ma_of_agent(i, ma_list)
 
         if ma_i == constraint['meta_agent'] or ma_i in violating_ma:
@@ -274,15 +256,13 @@ def meta_agents_violate_constraint(constraint, paths, ma_list, violating_ma=None
         prev = get_location(paths[i], constraint['timestep'] - 1)
         if len(constraint['loc']) == 1:  # vertex constraint
             if constraint['loc'][0] == curr:
-                # ma_i = get_ma_of_agent(i, ma_list)
                 # if ma_i not in violating_ma:
                     violating_ma.append(ma_i)
         else:  # edge constraint
             if constraint['loc'][0] == prev or constraint['loc'][1] == curr \
                     or constraint['loc'] == [curr, prev]:
-                # ma_i = get_ma_of_agent(i, ma_list)
                 # if ma_i not in violating_ma:
-                    violating_ma.append(ma_i)
+                violating_ma.append(ma_i)
 
     return violating_ma
 
@@ -318,27 +298,21 @@ def combined_constraints(constraints, new_constraints, updated_constraints=None)
     # print('const1: ', constraints)
     # print('const2: ', updated_constraints)
 
-
     for c in constraints:
         if c not in updated_constraints:
             updated_constraints.append(c)
-    # print(new_constraints)
 
     assert len(updated_constraints) <= len(constraints) + len(new_constraints)
     return updated_constraints
 
 
 def bypass_found(curr_cost, new_cost, curr_collisions_num, new_collisions_num):
-    # return False
     if curr_cost == new_cost \
         and (new_collisions_num < curr_collisions_num):
         return True
     return False
 
 def should_merge(collision, p, N=0):
-    # aSH
-    # CM = 0
-
     a1 = collision['a1']
     a2 = collision['a2']
 
@@ -355,17 +329,8 @@ def should_merge(collision, p, N=0):
     
     # check it is same meta-agent
     assert ma1 != ma2
-
     assert not (a2 in ma1 or a1 in ma2)
 
-    # for ai in ma1:
-    #     for aj in ma2:
-    #         if ai > aj:
-    #             ai, aj = aj, ai
-    #         CM += p['agent_collisions'][ai][aj]
-    # if CM > N:
-    #     print('> Merge meta-agents {}, {} into one meta-agent'.format(ma1, ma2))
-    #     return True
     return False
 
 
@@ -378,13 +343,10 @@ class ICBS_Solver(object):
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
         """
 
-        # self.ll_solver = a_star
-
         self.my_map = my_map
         self.starts = starts
         self.goals = goals
         self.num_of_agents = len(goals)
-        # self.discarded_agents = []
         self.num_of_generated = 0
         self.num_of_expanded = 0
         self.CPU_time = 0
@@ -427,7 +389,6 @@ class ICBS_Solver(object):
 
         assert temp_constraints[0]['meta_agent'] == ma1
         path1_constraints = combined_constraints(p['constraints'], temp_constraints[0])
-        # alt_paths1 = self.ll_solver(self.my_map,self.starts, self.goals,self.heuristics,list(ma1),path1_constraints)
         astar_ma1 = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(ma1),path1_constraints)
         alt_paths1 = astar_ma1.find_paths()
 
@@ -440,7 +401,6 @@ class ICBS_Solver(object):
 
 
             curr_paths.append(p['paths'][a1])
-            
 
         # print(curr_paths)
         # print(alt_paths1)
@@ -462,37 +422,23 @@ class ICBS_Solver(object):
             
         ma2 = collision['ma2'] #agent a2
 
-
         # print('Sending ma2 in collision {} to A* '.format(ma2))
-
 
         assert temp_constraints[1]['meta_agent'] == ma2
         path2_constraints = combined_constraints(p['constraints'], temp_constraints[1])
-        # alt_paths2 = self.ll_solver(self.my_map,self.starts, self.goals,self.heuristics,list(ma2),path2_constraints)
         astar_ma2 = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(ma2),path2_constraints)
         alt_paths2 = astar_ma2.find_paths()
-        
 
-
-        # for i in range(len(ma2)):
-        #     if len(alt_path1[i])> len(p['paths'][ma2[i]]):
-        #         bigger =True
         # if not alt_path2 or bigger:
         curr_paths = []
-        for a2 in ma2:
-
-
-
-            
+        for a2 in ma2:    
             not_nested_list = p['paths'][a2]
             assert any(isinstance(i, list) for i in not_nested_list) == False
-
 
             curr_paths.append(p['paths'][a2])
             
         # print(curr_paths)
         # print(alt_paths2)
-
 
         # get costs for the meta agent
         curr_cost = get_sum_of_cost(curr_paths)
@@ -563,11 +509,6 @@ class ICBS_Solver(object):
         if a_star_version == "pea_star":
             AStar = PEA_Star
         
-        #     # low-level solver
-        #     self.ll_solver = a_star
-        # else:
-        #     self.ll_solver = PEA_Star
-        
         print("USING: ", splitter , a_star_version)
 
         # Generate the root node
@@ -585,7 +526,6 @@ class ICBS_Solver(object):
         }       
         
         for i in range(self.num_of_agents):  # Find initial path for each agent
-            # path = self.ll_solver(self.my_map, self.starts, self.goals, self.heuristics, [i], root['constraints'])
             astar = AStar(self.my_map, self.starts, self.goals, self.heuristics, [i], root['constraints'])
             path = astar.find_paths()
 
@@ -702,8 +642,6 @@ class ICBS_Solver(object):
                 for a in ma:
                     print (q['paths'][a])
 
-
-                # path = self.ll_solver(self.my_map,self.starts, self.goals,self.heuristics,list(ma),q['constraints']) 
                 astar = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(ma),q['constraints'])
                 paths = astar.find_paths()
 
@@ -735,7 +673,6 @@ class ICBS_Solver(object):
 
 
                             v_ma_list = list(v_ma) # should use same list for all uses
-                            # path_v_ma = self.ll_solver(self.my_map,self.starts,self.goals,self.heuristics,v_ma_list,q['constraints'])
                             astar_v_ma = AStar(self.my_map,self.starts,self.goals,self.heuristics,v_ma_list,q['constraints'])
                             paths_v_ma = astar_v_ma.find_paths()
 
@@ -820,7 +757,6 @@ class ICBS_Solver(object):
 
 
                 # Update paths
-                # meta_agent_paths = self.ll_solver(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent),p['constraints'])
                 ma_astar = AStar(self.my_map,self.starts, self.goals,self.heuristics,list(meta_agent), updated_constraints)
                 ma_paths = ma_astar.find_paths()
 

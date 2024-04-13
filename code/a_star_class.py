@@ -3,23 +3,19 @@ import heapq
 from itertools import product
 import numpy as np
 import copy
-import collections
 
 def move(loc, dir):
-    # directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
-    directions = [(0, 0), (0, -1), (1, 0), (0, 1), (-1, 0)]
+    directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
 
 def get_sum_of_cost(paths):
     rst = 0
     for path in paths:
-        # print(path)
         rst += len(path) - 1
         if(len(path)>1):
             assert path[-1] != path[-2]
     return rst
-
 
 def compute_heuristics(my_map, goal):
     # Use Dijkstra to build a shortest-path tree rooted at the goal location
@@ -30,7 +26,7 @@ def compute_heuristics(my_map, goal):
     closed_list[goal] = root
     while len(open_list) > 0:
         (cost, loc, curr) = heapq.heappop(open_list)
-        for dir in range(1,5):
+        for dir in range(4):
             child_loc = move(loc, dir)
             child_cost = cost + 1
             if child_loc[0] < 0 or child_loc[0] >= len(my_map) \
@@ -43,7 +39,6 @@ def compute_heuristics(my_map, goal):
                 existing_node = closed_list[child_loc]
                 if existing_node['cost'] > child_cost:
                     closed_list[child_loc] = child
-                    # open_list.delete((existing_node['cost'], existing_node['loc'], existing_node))
                     heapq.heappush(open_list, (child_cost, child_loc, child))
             else:
                 closed_list[child_loc] = child
@@ -326,14 +321,6 @@ class A_Star(object):
 
 
             reached_goal = [False for i in range(len(self.agents))]
-            # for i, a in enumerate(self.agents):
-            #     # print(child_loc[i], goal_loc[i])
-            #     # print(max_constraints[i], curr['timestep']+1)
-                
-            #     if child_loc[i] == self.goals[i] and (curr['timestep']+1 > self.max_constraints[i]):
-            #         # print("agent ", a, 'has reached_goal at timestep ', curr['timestep'] + 1)
-            #         # print (self.max_constraints[i])
-            #         reached_goal[i] = True
 
             for i, a in enumerate(self.agents):
                 
@@ -363,27 +350,6 @@ class A_Star(object):
 
         return children
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def compare_nodes(self, n1, n2):
         """Return true is n1 is better than n2."""
 
@@ -394,11 +360,6 @@ class A_Star(object):
         assert isinstance(n2['g_val'] + n2['h_val'], int)
 
         return n1['g_val'] + n1['h_val'] < n2['g_val'] + n2['h_val']
-
-
-
-
-
 
     def find_paths(self):
 
