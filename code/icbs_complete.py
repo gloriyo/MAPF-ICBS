@@ -702,9 +702,7 @@ class ICBS_Solver(object):
                         if no_solution:
                             continue # move on to the next constraint
 
-                    # print("no solution? should not be here...")  
                     q['ma_collisions'] = detect_collisions(q['paths'],q['ma_list'])
-
 
                     if chosen_collision in q['ma_collisions']:
                         print(q['paths'])

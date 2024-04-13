@@ -378,16 +378,6 @@ class ICBS_CB_Solver(object):
                 # constraint can be met by chosen agent (must traverse conflict location/edge)                
                 assert alt_path_chosen and len(alt_path_chosen) == len(p['paths'][chosen_agent]) # if the collision occured, path which caused it likely exists
 
-                # # For debugging purposes only: this path should exist, continue
-                # if alt_path_chosen and len(alt_path_chosen) == len(p['paths'][chosen_agent]):
-                #     print('\tagent: ', chosen_agent, ' must traverse conflict location/edge. keep going....')
-                # else: 
-                #     # this should not happen
-                #     print('\t !!! agent: ', chosen_agent, ' cannot meet positive constraint')
-                #     print('old_path: ', p['paths'][chosen_agent])
-                #     print('new_path: ', alt_path_chosen)
-                #     assert False
-
                 # check for all that violate constraint and search for paths
                 # 1. Find paths for all others that violate the constraint
                 # 2. check if cardinal..........   
