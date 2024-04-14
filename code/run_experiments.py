@@ -87,8 +87,8 @@ if __name__ == '__main__':
                         help='Use the disjoint splitting')
     parser.add_argument('--hlsolver', type=str, default=HLSOLVER,
                         help='The solver to use (one of: {CBS,ICBS_CB,ICBS}), defaults to ' + str(HLSOLVER))
-    parser.add_argument('--llsolver', type=str, default=LLSOLVER,
-                        help='The solver to use (one of: {a_star,pea_star,epea_star}), defaults to ' + str(LLSOLVER))
+    # parser.add_argument('--llsolver', type=str, default=LLSOLVER,
+    #                     help='The solver to use (one of: {a_star,pea_star,epea_star}), defaults to ' + str(LLSOLVER))
     args = parser.parse_args()
 
 
@@ -162,7 +162,7 @@ if __name__ == '__main__':
 
 
 
-        solution = cbs.find_solution(args.disjoint, args.llsolver)
+        solution = cbs.find_solution(args.disjoint)
 
         if solution is not None:
             # print(solution)
