@@ -1,17 +1,8 @@
 import time as timer
 import heapq
 import random
-# from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
-
-
-# from a_star import a_star, compute_heuristics
-# from pea_star import pea_star
 
 from a_star_class import A_Star, get_location, get_sum_of_cost, compute_heuristics
-
-from pea_star_class import PEA_Star
-
-PEA_STAR = PEA_Star
 
 def detect_collision(path1, path2):
     ##############################
@@ -193,11 +184,10 @@ class CBSSolver(object):
         return node
 
 
-    def find_solution(self, disjoint, a_star_version):
+    def find_solution(self, disjoint):
         """ Finds paths for all agents from their start locations to their goal locations
 
         disjoint         - use disjoint splitting or not
-        a_star_version   - version of A*; "a_star" or "pea_star"
         """
 
         self.start_time = timer.time()
@@ -209,10 +199,7 @@ class CBSSolver(object):
 
         print("USING: ", splitter)
 
-        AStar = PEA_STAR
-
-        if a_star_version == "a_star":
-            AStar = A_Star
+        AStar = A_Star
 
         # Generate the root node
         # constraints   - list of constraints

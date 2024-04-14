@@ -5,14 +5,11 @@ import random
 # from multi_agent_planner import ll_solver, get_sum_of_cost, compute_heuristics, get_location
 
 from a_star_class import A_Star, get_sum_of_cost, compute_heuristics, get_location
-from pea_star_class import PEA_Star
-from epea_star_class import EPEA_Star
 
 import copy
 
 import numpy
 
-PEA_STAR = PEA_Star
 '''
    ## Reference to class
 '''
@@ -488,11 +485,10 @@ class ICBS_Solver(object):
         return meta_agent, ma_list
 
 
-    def find_solution(self, disjoint, a_star_version):
+    def find_solution(self, disjoint):
         """ Finds paths for all agents from their start locations to their goal locations
 
         disjoint         - use disjoint splitting or not
-        a_star_version   - version of A*; "a_star" or "pea_star"
         """
 
         self.start_time = timer.time()
@@ -502,14 +498,7 @@ class ICBS_Solver(object):
         else:
             splitter = standard_splitting
 
-        AStar = EPEA_Star
-
-        if a_star_version == "a_star":
-            AStar = A_Star
-        if a_star_version == "pea_star":
-            AStar = PEA_Star
-        
-        print("USING: ", splitter , a_star_version)
+        AStar = A_Star
 
         # Generate the root node
         # constraints   - list of constraints
