@@ -27,24 +27,25 @@ def detect_collision(path1, path2):
        
     return None
 
-
 def detect_collisions(paths):
     ##############################
     # Task 3.1: Return a list of first collisions between all robot pairs.
-    #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
+    #           A collision can be represented as a dictionary that contains the id of the two robots, the vertex or edge
     #           causing the collision, and the timestep at which the collision occurred.
     #           You should use your detect_collision function to find a collision between two robots.
-    collisions =[]
-    for i in range(len(paths)-1):
-        for j in range(i+1,len(paths)):
-            if detect_collision(paths[i],paths[j]) !=None:
-                position,t = detect_collision(paths[i],paths[j])
-                collisions.append({'a1':i,
-                                'a2':j,
-                                'loc':position,
-                                'timestep':t+1})
+    collisions = []
+    for i in range(len(paths) - 1):
+        for j in range(i + 1, len(paths)):
+            collision_result = detect_collision(paths[i], paths[j])  # Store result of the function call
+            if collision_result is not None:
+                position, t = collision_result  # Use the stored result
+                collisions.append({
+                    'a1': i,
+                    'a2': j,
+                    'loc': position,
+                    'timestep': t + 1
+                })
     return collisions
-
 
 def standard_splitting(collision):
     ##############################
